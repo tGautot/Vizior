@@ -3,7 +3,7 @@
 
 namespace vizior {
 
-int16_t targetFrameRate=30;
+int16_t targetFrameRate=60;
 Color RED = {255,0,0,255};
 Color GRN = {0,255,0,255};
 Color BLU = {0,0,255,255};
@@ -172,6 +172,21 @@ void init(){
     glDeleteShader(fragmentShader);
 }
 
+loop_func loop;
+void setLoopFunc(loop_func f){
+    loop = f;
+}
+
+void Start(){
+    int fc = 0;
+    while(!glfwWindowShouldClose(window)){
+        loop(fc++);
+        usleep(1000000 * 1.0/targetFrameRate);
+        nextElemIdx = 0;
+        nextVertIdx = 0;
+    }
+}
+
 void drawAll(){
 
     glGenVertexArrays(1,&VAO);
@@ -199,20 +214,22 @@ void drawAll(){
     glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 6*sizeof(float), (void*)(2*sizeof(float)));
     glEnableVertexAttribArray(1);
 
-    while(!glfwWindowShouldClose(window)){
-        glClearColor( 1.0f, 1.0f, 1.0f, 0.0f );
-        glClear(GL_COLOR_BUFFER_BIT);
+    
+    glClearColor( 1.0f, 1.0f, 1.0f, 0.0f );
+    glClear(GL_COLOR_BUFFER_BIT);
 
 
-        glUseProgram(shaderProgram);
-        glBindVertexArray(VAO); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
-        glDrawElements(GL_TRIANGLES, nextElemIdx, GL_UNSIGNED_INT, 0);
-        /* Swap front and back buffers */
-        glfwSwapBuffers(window);
+    glUseProgram(shaderProgram);
+    glBindVertexArray(VAO); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
+    glDrawElements(GL_TRIANGLES, nextElemIdx, GL_UNSIGNED_INT, 0);
+    /* Swap front and back buffers */
+    glfwSwapBuffers(window);
 
-        /* Poll for and process events */
-        glfwPollEvents();
-    }
+    /* Poll for and process events */
+    glfwPollEvents();
+
+        
+    
 }
 
 void drawTriangle(Point2D* ps, Color* color){

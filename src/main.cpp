@@ -5,11 +5,7 @@
 
 #include "vizior.hpp"
 
-int main(void)
-{
-    const char *winName = "Triangles??";
-    vizior::createWindow(800,600,winName);
-    vizior::init();
+void loop(int frameCount){
     vizior::Point2D t1[3] = {
         {0,0}, {0,599}, {799,0}
     };
@@ -23,6 +19,24 @@ int main(void)
     };
 
     vizior::drawLine(l1, 2, &vizior::BLK);
+
+    vizior::Point2D l2[2]{
+        {0,0},{(frameCount/2)%800,(frameCount/2)%600}
+    };
+    vizior::Color PNK{255,9*16+9,14*16+14};
+    vizior::drawLine(l2, 10, &PNK);
+
+
     vizior::drawAll();
+}
+
+int main(void)
+{
+    const char *winName = "Triangles??";
+    vizior::createWindow(800,600,winName);
+    vizior::init();
+    vizior::setLoopFunc(loop);
+    vizior::Start();
+    
     return 0;
 }

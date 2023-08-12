@@ -5,9 +5,12 @@
 #include <GLFW/glfw3.h>
 #include <iostream>
 #include <cmath>
+#include <unistd.h> // for sleep
 
 namespace vizior {
 
+    typedef void (*loop_func)(int);
+    
     enum ANCHOR {
         ANCHOR_TR, ANCHOR_TL, ANCHOR_BR, ANCHOR_BL, ANCHOR_C // Top-Bottom Left-Right Center
     };
@@ -33,9 +36,10 @@ namespace vizior {
 
     int createWindow(int32_t w, int32_t h, const char* name);
 
-    // void loop(int);
+    extern loop_func loop;
+    void setLoopFunc(loop_func loop);
+    void Start();
 
-    // void Start();
     void init();
     void drawAll();
 
