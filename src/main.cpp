@@ -3,52 +3,26 @@
 
 #include <iostream>
 
+#include "vizior.hpp"
+
 int main(void)
 {
-    GLFWwindow* window;
+    const char *winName = "Triangles??";
+    vizior::createWindow(800,600,winName);
+    vizior::init();
+    vizior::Point2D t1[3] = {
+        {0,0}, {0,599}, {799,0}
+    };
+    vizior::Point2D center = {400,300};
+    vizior::drawTriangle(t1, &vizior::RED);
+    vizior::drawCircle(vizior::ANCHOR_C, &center, 100, &vizior::BLU);
+    vizior::drawRectangle(vizior::ANCHOR_C, &center, 700, 20, 45, &vizior::GRN);
+    
+    vizior::Point2D l1[2]{
+        {600, 200}, {650,530}
+    };
 
-    /* Initialize the library */
-    if (!glfwInit())
-        return -1;
-
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-
-    /* Create a windowed mode window and its OpenGL context */
-    window = glfwCreateWindow(800, 600, "Learn OpenGL", NULL, NULL);
-    if (!window)
-    {
-        glfwTerminate();
-        return -1;
-    }
-
-    /* Make the window's context current */
-    glfwMakeContextCurrent(window);
-
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-    {
-        std::cout << "Failed to initialize GLAD" << std::endl;
-        return -1;
-    } 
-
-    glViewport(0,0,800,600);
-    glClearColor( 0.7f, 0.1f, 0.1f, 0.0f );
-
-    /* Loop until the user closes the window */
-    while (!glfwWindowShouldClose(window))
-    {
-        /* Render here */
-        glClear(GL_COLOR_BUFFER_BIT);
-
-        /* Swap front and back buffers */
-        glfwSwapBuffers(window);
-
-        /* Poll for and process events */
-        glfwPollEvents();
-    }
-
-    glfwTerminate();
+    vizior::drawLine(l1, 2, &vizior::BLK);
+    vizior::drawAll();
     return 0;
 }

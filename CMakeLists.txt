@@ -13,6 +13,6 @@ set( GLFW_INSTALL OFF CACHE BOOL  "GLFW lib only" )
 
 add_subdirectory( external/glfw )
      
-add_executable( vizior WIN32 src/main.cpp src/glad.c )
+add_executable( vizior WIN32 src/main.cpp src/glad.c src/vizior.cpp )
 target_link_libraries( vizior ${OPENGL_LIBRARIES} glfw )
 target_include_directories( vizior PUBLIC ./include PUBLIC external/glfw/include PUBLIC external )
