@@ -1,42 +1,51 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-
+#include <memory>
 #include <iostream>
 
-#include "vizior.hpp"
+#include "Vizior.hpp"
+
+std::shared_ptr<Vizior::Window> win = NULL;
+std::shared_ptr<Vizior::ImageBuilder> src = NULL;
 
 void loop(int frameCount){
-    vizior::Point2D t1[3] = {
+    std::cout << frameCount << std::endl; 
+    Vizior::Point2D t1[3] = {
         {0,0}, {0,599}, {799,0}
     };
-    vizior::Point2D center = {400,300};
-    vizior::drawTriangle(t1, &vizior::RED);
-    vizior::drawCircle(vizior::ANCHOR_C, &center, 100, &vizior::BLU);
-    vizior::drawRectangle(vizior::ANCHOR_C, &center, 700, 20, 45, &vizior::GRN);
+    Vizior::Point2D center = {400,300};
+    if(frameCount > 20)
+        src->drawTriangle(t1, Vizior::RED);
+    /*Vizior::drawCircle(Vizior::ANCHOR_C, &center, 100, &Vizior::BLU);
+    Vizior::drawRectangle(Vizior::ANCHOR_C, &center, 700, 20, 45, &Vizior::GRN);
     
-    vizior::Point2D l1[2]{
+    Vizior::Point2D l1[2]{
         {600, 200}, {650,530}
     };
 
-    vizior::drawLine(l1, 2, &vizior::BLK);
+    Vizior::drawLine(l1, 2, &Vizior::BLK);
 
-    vizior::Point2D l2[2]{
+    Vizior::Point2D l2[2]{
         {0,0},{(frameCount/2)%800,(frameCount/2)%600}
     };
-    vizior::Color PNK{255,9*16+9,14*16+14};
-    vizior::drawLine(l2, 10, &PNK);
+    Vizior::Color PNK{255,9*16+9,14*16+14};
+    Vizior::drawLine(l2, 10, &PNK);
 
 
-    vizior::drawAll();
+    Vizior::drawAll();*/
 }
 
 int main(void)
 {
     const char *winName = "Triangles??";
-    vizior::createWindow(800,600,winName);
-    vizior::init();
-    vizior::setLoopFunc(loop);
-    vizior::Start();
+    std::cout << winName << std::endl; 
+
+    win = std::make_shared<Vizior::Window>(800,600,winName);
+    src = std::make_shared<Vizior::ImageBuilder>();
+    win->setSource(src);
+    Vizior::registerWindow(win);
+    Vizior::setLoopFunc(loop);
+    Vizior::Start();
     
     return 0;
 }
