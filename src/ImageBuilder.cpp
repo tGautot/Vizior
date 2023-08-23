@@ -13,9 +13,13 @@ ImageBuilder::ImageBuilder(){
     // TODO change this or handle it better
     m_Verts = new float[m_nVertexVals*10000];
     m_VertIdx = new unsigned int[3*10000];
+    m_ElemBlocks = new ElementBlock[1*10000];
     m_NextElemPos = 0;
     m_NextVertPos = 0;
+    m_NextElemBlockPos = 0;
 
+    glGetFloatv(GL_ALIASED_LINE_WIDTH_RANGE, m_LineWidthRange);
+    std::cout << "Max pure ogl line width is " << m_LineWidthRange[1] << std::endl;
     // Will be set for real once bound to a window, polly not needed
     m_Width = 100;
     m_Height = 100;
@@ -25,6 +29,7 @@ ImageBuilder::ImageBuilder(){
 ImageBuilder::~ImageBuilder(){
     delete[] m_Verts;
     delete[] m_VertIdx;
+    delete[] m_ElemBlocks;
 }
 
 int ImageBuilder::addVert(int x, int y, Color& color){
@@ -38,18 +43,35 @@ int ImageBuilder::addVert(int x, int y, Color& color){
     return (m_NextVertPos - m_nVertexVals)/m_nVertexVals;
 }
 
+void ImageBuilder::addElementBlock(GLenum mode, int elemCount, float size){
+    if(size < 1.0f) size = 1.0f;
+    if(m_NextElemBlockPos == 0){
+        m_ElemBlocks[0] = {mode, 0, elemCount, size};
+        m_NextElemBlockPos++;
+        return;
+    }
+    ElementBlock lastBlock = m_ElemBlocks[m_NextElemBlockPos-1];
+    GLenum lastMode = lastBlock.mode;
+    if(lastMode == mode && (lastMode == GL_TRIANGLES || lastMode == GL_POINTS) && lastBlock.size == size){
+        m_ElemBlocks[m_NextElemBlockPos-1].cnt += elemCount;
+        return;
+    }
+    m_ElemBlocks[m_NextElemBlockPos] = {mode, lastBlock.start + lastBlock.cnt, elemCount, size};
+    m_NextElemBlockPos++;
+}
 
 void ImageBuilder::clearAll(){
     m_NextElemPos = 0;
     m_NextVertPos = 0;
+    m_NextElemBlockPos = 0;
 }
 
 void ImageBuilder::drawTriangle(Point2D* ps, Color& color){
     for(int i = 0; i < 3; i++){
-        m_VertIdx[m_NextElemPos] = m_NextVertPos/m_nVertexVals;
-        addVert(ps[i].x, ps[i].y, color);
+        m_VertIdx[m_NextElemPos] = addVert(ps[i].x, ps[i].y, color);
         m_NextElemPos++;
     }
+    addElementBlock(GL_TRIANGLES, 3, 0.0f);
 }
 
 void ImageBuilder::drawRectangle(ANCHOR a, Point2D& anch, int w, int h, float rot, Color& color){
@@ -89,9 +111,9 @@ void ImageBuilder::drawRectangle(ANCHOR a, Point2D& anch, int w, int h, float ro
     }
 
     Point2D pbl = bl.rotateAroundBy(anch, rot);
-    Point2D ptl = bl.rotateAroundBy(anch, rot);
-    Point2D pbr = bl.rotateAroundBy(anch, rot);
-    Point2D ptr = bl.rotateAroundBy(anch, rot);
+    Point2D ptl = tl.rotateAroundBy(anch, rot);
+    Point2D pbr = br.rotateAroundBy(anch, rot);
+    Point2D ptr = tr.rotateAroundBy(anch, rot);
 
     int blIdx = addVert(pbl.x, pbl.y, color); 
     int tlIdx = addVert(ptl.x, ptl.y, color); 
@@ -107,6 +129,9 @@ void ImageBuilder::drawRectangle(ANCHOR a, Point2D& anch, int w, int h, float ro
     m_VertIdx[m_NextElemPos+1] = brIdx;
     m_VertIdx[m_NextElemPos+2] = tlIdx;
     m_NextElemPos+=3;
+
+
+    addElementBlock(GL_TRIANGLE_STRIP, 6, 0.0f);
 }
 
 void ImageBuilder::drawCircle(Point2D& center, int r, Color& color){
@@ -114,40 +139,50 @@ void ImageBuilder::drawCircle(Point2D& center, int r, Color& color){
     // Center Point
     addVert(center.x, center.y, color);
 
+    int precision = 180;
     // Circle points
-    for(int i = 0; i < 180; i++){
-        int px = center.x + cos(M_PI * i*2 / 180) * r;
-        int py = center.y + sin(M_PI * i*2 / 180) * r;
+    for(int i = 0; i < precision; i++){
+        int px = center.x + cos(M_PI * i*2 / precision) * r;
+        int py = center.y + sin(M_PI * i*2 / precision) * r;
         if(i >= 1){
-            m_VertIdx[m_NextElemPos] = startVertIdx/6;
-            m_VertIdx[m_NextElemPos+1] = (m_NextVertPos-m_nVertexVals)/6;
-            m_VertIdx[m_NextElemPos+2] = m_NextVertPos/6;
+            m_VertIdx[m_NextElemPos] = startVertIdx/m_nVertexVals;
+            m_VertIdx[m_NextElemPos+1] = (m_NextVertPos-m_nVertexVals)/m_nVertexVals;
+            m_VertIdx[m_NextElemPos+2] = m_NextVertPos/m_nVertexVals;
             m_NextElemPos += 3;
         } 
         addVert(px, py, color);
 
     }
-    m_VertIdx[m_NextElemPos] = startVertIdx/6;
-    m_VertIdx[m_NextElemPos+1] = (m_NextVertPos-m_nVertexVals)/6;
-    m_VertIdx[m_NextElemPos+2] = startVertIdx/6 + 1;
+    m_VertIdx[m_NextElemPos] = startVertIdx/m_nVertexVals;
+    m_VertIdx[m_NextElemPos+1] = (m_NextVertPos-m_nVertexVals)/m_nVertexVals;
+    m_VertIdx[m_NextElemPos+2] = startVertIdx/m_nVertexVals + 1;
     m_NextElemPos += 3;
+    addElementBlock(GL_TRIANGLES, precision*3, 0.0f);
 
+}
 
+void ImageBuilder::drawLine(Point2D* ps, int w, Color& color){
+    if(w > m_LineWidthRange[1]){
+        // Requested line width is too high for GPU, simulate it with rectangle
+        Point2D center = (ps[0] + ps[1])/2;
+        Point2D orientation = ps[1] - ps[0];
+        float angle = 180 * atan2(orientation.y, orientation.x) / M_PI;
+        
+        int length = sqrt(orientation.x*orientation.x + orientation.y*orientation.y);
+        drawRectangle(ANCHOR_C, center, length, w, angle, color);
+        return;
+    }
+    // Pure OpenGL line
+    m_VertIdx[m_NextElemPos] = addVert(ps[0].x, ps[0].y, color);
+    m_NextElemPos++;
+    m_VertIdx[m_NextElemPos] = addVert(ps[1].x, ps[1].y, color);
+    m_NextElemPos++;
+    addElementBlock(GL_LINE_STRIP, 2, 1.0f*w);
 }
 
 void ImageBuilder::setDimensions(int w, int h){
     m_Width = w;
     m_Height = h;
-}
-
-void ImageBuilder::drawLine(Point2D* ps, int w, Color& color){
-    Point2D center = (ps[0] + ps[1])/2;
-    Point2D orientation = ps[1] - ps[0];
-    float angle = 180 * atan2(orientation.y, orientation.x) / M_PI;
-    
-    int length = sqrt(orientation.x*orientation.x + orientation.y*orientation.y);
-    drawRectangle(ANCHOR_C, center, length, w, angle, color);
-    
 }
 
 void ImageBuilder::compileShaders(){
@@ -255,12 +290,26 @@ void ImageBuilder::submit(){
     glUseProgram(m_ShaderProgram);
     glBindVertexArray(m_VAO); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
     
-    
-    
-    glDrawElements(GL_TRIANGLES, getElemCount(), GL_UNSIGNED_INT, 0);
+    int nBlock = getElemBlockCount();
+    std::cout << "There are " << nBlock << " elem blocks" << std::endl;
+    for(int i = 0; i < nBlock; i++){
+        ElementBlock block = m_ElemBlocks[i];
+        std::cout << "Drawing block of mode " << block.mode << " from " << block.start << " of " << block.cnt << " size " << block.size;
+        if(block.mode == GL_LINES || block.mode == GL_LINE_STRIP || block.mode == GL_LINE_LOOP){
+            glLineWidth(block.size);
+        } else if(block.mode == GL_POINTS){
+            glPointSize(block.size);
+        }
+        glDrawElements(block.mode, block.cnt, GL_UNSIGNED_INT, (void*)(block.start*sizeof(unsigned int)));
+        std::cout << " Error?: " << errno << std::endl;
+        
+    }
     
 
     clearAll();
 
 }
+
+
+
 }

@@ -32,6 +32,12 @@ namespace Vizior {
         uint8_t r, g, b, a;
     } Color;
 
+    typedef struct {
+        GLenum mode;
+        int start, cnt;
+        float size; // Used for points and lines
+    } ElementBlock;
+
 
     extern Color RED;
     extern Color GRN;
@@ -58,6 +64,8 @@ namespace Vizior {
         int getVertCount(){return m_NextVertPos;}
         unsigned int* getEBO(){return m_VertIdx;}
         int getElemCount(){return m_NextElemPos;}
+        ElementBlock* getElemBlocks(){return m_ElemBlocks;}
+        int getElemBlockCount(){return m_NextElemBlockPos;}
 
         int getWidth(){return m_Width;}
         int getHeight(){return m_Height;}
@@ -65,10 +73,15 @@ namespace Vizior {
         void submit();
     private:
         int addVert(int x, int y, Color& color);
+        void addElementBlock(GLenum mode, int vertexCount, float size);
         // TODO Make it so people that know how to write shader can modify the shaders used
         // TODO Should probably put shaders somewhere else than directly in window too
         void compileShaders();
-        
+
+        // OpenGL related values
+        GLfloat m_LineWidthRange[2] = {0.0f, 0.0f};
+
+        // Drawing space dimensions
         int m_Width, m_Height;
 
         // Each "vertex" is xyrgba
@@ -77,6 +90,9 @@ namespace Vizior {
         int m_NextVertPos;
         unsigned int* m_VertIdx; // Our EBO buffer
         int m_NextElemPos;
+
+        ElementBlock* m_ElemBlocks;
+        int m_NextElemBlockPos;
 
         unsigned int m_ShaderProgram, m_EBO, m_VAO, m_VBO;
         const char* m_VertexShaderSrc = 
