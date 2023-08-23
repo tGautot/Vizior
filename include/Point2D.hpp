@@ -1,3 +1,13 @@
+/**
+ * @file Point2D.hpp
+ * @author Tom Gautot (tgautot.off@gmail.com)
+ * @brief Simple 2D Point class used thouroughly in ImageBuilder 
+ * @version 0.1
+ * @date 2023-08-23
+ * 
+ * @copyright Copyright (c) 2023
+ * 
+ */
 #ifndef VIZIOR_POINT2D_HPP
 #define VIZIOR_POINT2D_HPP
 
