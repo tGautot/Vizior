@@ -109,6 +109,8 @@ Window::~Window(){
 }
 
 void Window::drawSource(){
+    glfwMakeContextCurrent(m_glfw_Window);
+
     if(m_Src == nullptr){
         std::cout << "Trying to draw on window " << m_WinName << " without source" << std::endl;
         return;

@@ -5,8 +5,8 @@
 
 #include "Vizior.hpp"
 
-std::shared_ptr<Vizior::Window> win = NULL;
-std::shared_ptr<Vizior::ImageBuilder> src = NULL;
+std::shared_ptr<Vizior::Window> win1 = NULL, win2 = NULL;
+std::shared_ptr<Vizior::ImageBuilder> src1 = NULL, src2 = NULL;
 
 void loop(int frameCount){
     std::cout << frameCount << std::endl; 
@@ -14,8 +14,10 @@ void loop(int frameCount){
         {0,0}, {0,599}, {799,0}
     };
     Vizior::Point2D center = {400,300};
-    if(frameCount > 20)
-        src->drawTriangle(t1, Vizior::RED);
+    if(frameCount > 20){
+        src1->drawTriangle(t1, Vizior::RED);
+        src2->drawTriangle(t1, Vizior::BLU);
+    }
     /*Vizior::drawCircle(Vizior::ANCHOR_C, &center, 100, &Vizior::BLU);
     Vizior::drawRectangle(Vizior::ANCHOR_C, &center, 700, 20, 45, &Vizior::GRN);
     
@@ -37,13 +39,19 @@ void loop(int frameCount){
 
 int main(void)
 {
-    const char *winName = "Triangles??";
-    std::cout << winName << std::endl; 
+    const char *winName1 = "First Window";
+    const char *winName2 = "Second Window";
 
-    win = std::make_shared<Vizior::Window>(800,600,winName);
-    src = std::make_shared<Vizior::ImageBuilder>();
-    win->setSource(src);
-    Vizior::registerWindow(win);
+    win1 = std::make_shared<Vizior::Window>(800,600,winName1);
+    src1 = std::make_shared<Vizior::ImageBuilder>();
+    win1->setSource(src1);
+    std::cout << "Register window with id " << Vizior::registerWindow(win1) << std::endl;
+
+    win2 = std::make_shared<Vizior::Window>(800,600,winName2);
+    src2 = std::make_shared<Vizior::ImageBuilder>();
+    win2->setSource(src2);
+    std::cout << "Register window with id " << Vizior::registerWindow(win2) << std::endl;
+
     Vizior::setLoopFunc(loop);
     Vizior::Start();
     
