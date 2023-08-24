@@ -17,8 +17,17 @@ ImageBuilder::ImageBuilder(){
     m_NextElemPos = 0;
     m_NextVertPos = 0;
     m_NextElemBlockPos = 0;
+    m_CurrElemID = 0;
 
     glGetFloatv(GL_ALIASED_LINE_WIDTH_RANGE, m_LineWidthRange);
+    glEnable(GL_MULTISAMPLE);
+
+    // Texture parameters
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
     std::cout << "Max pure ogl line width is " << m_LineWidthRange[1] << std::endl;
     // Will be set for real once bound to a window, polly not needed
     m_Width = 100;
@@ -33,30 +42,38 @@ ImageBuilder::~ImageBuilder(){
 }
 
 int ImageBuilder::addVert(int x, int y, Color& color){
-    m_Verts[m_NextVertPos] = (2.0f * x/m_Width) -1;
-    m_Verts[m_NextVertPos+1] = (2.0f * y/m_Height) -1;
-    m_Verts[m_NextVertPos+2] = color.r/255.0;
-    m_Verts[m_NextVertPos+3] = color.g/255.0;
-    m_Verts[m_NextVertPos+4] = color.b/255.0;
-    m_Verts[m_NextVertPos+5] = color.a/255.0;
-    m_NextVertPos += m_nVertexVals;
-    return (m_NextVertPos - m_nVertexVals)/m_nVertexVals;
+    m_Verts[m_NextVertPos++] = (2.0f * x/m_Width) -1;
+    m_Verts[m_NextVertPos++] = (2.0f * y/m_Height) -1;
+    m_Verts[m_NextVertPos++] = color.r/255.0;
+    m_Verts[m_NextVertPos++] = color.g/255.0;
+    m_Verts[m_NextVertPos++] = color.b/255.0;
+    m_Verts[m_NextVertPos++] = color.a/255.0;
+    return m_CurrElemID++;
 }
 
-void ImageBuilder::addElementBlock(GLenum mode, int elemCount, float size){
-    if(size < 1.0f) size = 1.0f;
+int ImageBuilder::addVertWithTex(int x, int y, float s, float t){
+    m_Verts[m_NextVertPos++] = (2.0f * x/m_Width) -1;
+    m_Verts[m_NextVertPos++] = (2.0f * y/m_Height) -1;
+    m_Verts[m_NextVertPos++] = s;
+    m_Verts[m_NextVertPos++] = t;
+    return m_CurrElemID++;
+}
+
+void ImageBuilder::addElementBlock(GLenum mode, int elemCount, unsigned int size, unsigned int shdrProg, Texture* tex){
+    if(size < 1) size = 1;
     if(m_NextElemBlockPos == 0){
-        m_ElemBlocks[0] = {mode, 0, elemCount, size};
+        m_ElemBlocks[0] = {mode, 0, elemCount, size, shdrProg, tex};
         m_NextElemBlockPos++;
         return;
     }
     ElementBlock lastBlock = m_ElemBlocks[m_NextElemBlockPos-1];
     GLenum lastMode = lastBlock.mode;
-    if(lastMode == mode && (lastMode == GL_TRIANGLES || lastMode == GL_POINTS) && lastBlock.size == size){
+    if(lastMode == mode && (lastMode == GL_TRIANGLES || lastMode == GL_POINTS) && lastBlock.size == size 
+            && lastBlock.shdrProg == shdrProg && lastBlock.texture == tex){
         m_ElemBlocks[m_NextElemBlockPos-1].cnt += elemCount;
         return;
     }
-    m_ElemBlocks[m_NextElemBlockPos] = {mode, lastBlock.start + lastBlock.cnt, elemCount, size};
+    m_ElemBlocks[m_NextElemBlockPos] = {mode, lastBlock.start + lastBlock.cnt, elemCount, size, shdrProg, tex};
     m_NextElemBlockPos++;
 }
 
@@ -64,6 +81,7 @@ void ImageBuilder::clearAll(){
     m_NextElemPos = 0;
     m_NextVertPos = 0;
     m_NextElemBlockPos = 0;
+    m_CurrElemID = 0;
 }
 
 void ImageBuilder::drawTriangle(Point2D* ps, Color& color){
@@ -71,71 +89,77 @@ void ImageBuilder::drawTriangle(Point2D* ps, Color& color){
         m_VertIdx[m_NextElemPos] = addVert(ps[i].x, ps[i].y, color);
         m_NextElemPos++;
     }
-    addElementBlock(GL_TRIANGLES, 3, 0.0f);
+    addElementBlock(GL_TRIANGLES, 3, 0.0f, m_ShaderProgram, nullptr);
 }
 
-void ImageBuilder::drawRectangle(ANCHOR a, Point2D& anch, int w, int h, float rot, Color& color){
-    Point2D bl, tl, br, tr;
+Point2D* getCornersOfRect(ANCHOR a, Point2D& anch, int w, int h, int rot){
+    Point2D* corners = new Point2D[4]; 
+    Point2D *bl = corners, *tl = corners+1 , *br = corners+2, *tr = corners+3;
 
     switch(a){
         case ANCHOR_C:
-            bl = Point2D(anch.x - w/2, anch.y - h/2);
-            tl = Point2D(anch.x - w/2, anch.y + h/2);
-            br = Point2D(anch.x + w/2, anch.y - h/2);
-            tr = Point2D(anch.x + w/2, anch.y + h/2);
+            *bl = Point2D(anch.x - w/2, anch.y - h/2);
+            *tl = Point2D(anch.x - w/2, anch.y + h/2);
+            *br = Point2D(anch.x + w/2, anch.y - h/2);
+            *tr = Point2D(anch.x + w/2, anch.y + h/2);
             break;
         case ANCHOR_BL:
-            bl = Point2D(anch.x  , anch.y  );
-            tl = Point2D(anch.x  , anch.y+h);
-            br = Point2D(anch.x+w, anch.y  );
-            tr = Point2D(anch.x+w, anch.y+h);
+            *bl = Point2D(anch.x  , anch.y  );
+            *tl = Point2D(anch.x  , anch.y+h);
+            *br = Point2D(anch.x+w, anch.y  );
+            *tr = Point2D(anch.x+w, anch.y+h);
             break;
         case ANCHOR_TL:
-            bl = Point2D(anch.x  , anch.y-h);
-            tl = Point2D(anch.x  , anch.y  );
-            br = Point2D(anch.x+w, anch.y-h);
-            tr = Point2D(anch.x+w, anch.y  );
+            *bl = Point2D(anch.x  , anch.y-h);
+            *tl = Point2D(anch.x  , anch.y  );
+            *br = Point2D(anch.x+w, anch.y-h);
+            *tr = Point2D(anch.x+w, anch.y  );
             break;
         case ANCHOR_BR:
-            bl = Point2D(anch.x-w, anch.y  );
-            tl = Point2D(anch.x-w, anch.y+h);
-            br = Point2D(anch.x  , anch.y  );
-            tr = Point2D(anch.x  , anch.y+h);
+            *bl = Point2D(anch.x-w, anch.y  );
+            *tl = Point2D(anch.x-w, anch.y+h);
+            *br = Point2D(anch.x  , anch.y  );
+            *tr = Point2D(anch.x  , anch.y+h);
             break;
         case ANCHOR_TR:
-            bl = Point2D(anch.x-w, anch.y-h);
-            tl = Point2D(anch.x-w, anch.y  );
-            br = Point2D(anch.x  , anch.y-h);
-            tr = Point2D(anch.x  , anch.y  );
+            *bl = Point2D(anch.x-w, anch.y-h);
+            *tl = Point2D(anch.x-w, anch.y  );
+            *br = Point2D(anch.x  , anch.y-h);
+            *tr = Point2D(anch.x  , anch.y  );
             break;
     }
 
-    Point2D pbl = bl.rotateAroundBy(anch, rot);
-    Point2D ptl = tl.rotateAroundBy(anch, rot);
-    Point2D pbr = br.rotateAroundBy(anch, rot);
-    Point2D ptr = tr.rotateAroundBy(anch, rot);
+    *bl = bl->rotateAroundBy(anch, rot);
+    *tl = tl->rotateAroundBy(anch, rot);
+    *br = br->rotateAroundBy(anch, rot);
+    *tr = tr->rotateAroundBy(anch, rot);
+    return corners;
+}
 
-    int blIdx = addVert(pbl.x, pbl.y, color); 
-    int tlIdx = addVert(ptl.x, ptl.y, color); 
-    int brIdx = addVert(pbr.x, pbr.y, color); 
-    int trIdx = addVert(ptr.x, ptr.y, color); 
+void ImageBuilder::drawRectangle(ANCHOR a, Point2D& anch, int w, int h, float rot, Color& color){
+    Point2D* corners = getCornersOfRect(a, anch, w, h, rot);
+    Point2D bl = corners[0], tl = corners[1], br = corners[2], tr = corners[3];
 
-    m_VertIdx[m_NextElemPos] = blIdx;
-    m_VertIdx[m_NextElemPos+1] = tlIdx;
-    m_VertIdx[m_NextElemPos+2] = brIdx;
-    m_NextElemPos+=3;
+    int blIdx = addVert(bl.x, bl.y, color); 
+    int tlIdx = addVert(tl.x, tl.y, color); 
+    int brIdx = addVert(br.x, br.y, color); 
+    int trIdx = addVert(tr.x, tr.y, color); 
 
-    m_VertIdx[m_NextElemPos] = trIdx;
-    m_VertIdx[m_NextElemPos+1] = brIdx;
-    m_VertIdx[m_NextElemPos+2] = tlIdx;
-    m_NextElemPos+=3;
+    delete[] corners;
+    
+    m_VertIdx[m_NextElemPos++] = blIdx;
+    m_VertIdx[m_NextElemPos++] = tlIdx;
+    m_VertIdx[m_NextElemPos++] = brIdx;
+    m_VertIdx[m_NextElemPos++] = trIdx;
+    m_VertIdx[m_NextElemPos++] = brIdx;
+    m_VertIdx[m_NextElemPos++] = tlIdx;
 
 
-    addElementBlock(GL_TRIANGLE_STRIP, 6, 0.0f);
+    addElementBlock(GL_TRIANGLE_STRIP, 6, 0.0f, m_ShaderProgram, nullptr);
 }
 
 void ImageBuilder::drawCircle(Point2D& center, int r, Color& color){
-    int startVertIdx = m_NextVertPos;
+    int startElemId = m_CurrElemID;
     // Center Point
     addVert(center.x, center.y, color);
 
@@ -145,19 +169,18 @@ void ImageBuilder::drawCircle(Point2D& center, int r, Color& color){
         int px = center.x + cos(M_PI * i*2 / precision) * r;
         int py = center.y + sin(M_PI * i*2 / precision) * r;
         if(i >= 1){
-            m_VertIdx[m_NextElemPos] = startVertIdx/m_nVertexVals;
-            m_VertIdx[m_NextElemPos+1] = (m_NextVertPos-m_nVertexVals)/m_nVertexVals;
-            m_VertIdx[m_NextElemPos+2] = m_NextVertPos/m_nVertexVals;
-            m_NextElemPos += 3;
+            m_VertIdx[m_NextElemPos++] = startElemId;
+            m_VertIdx[m_NextElemPos++] = m_CurrElemID-1;
+            m_VertIdx[m_NextElemPos++] = m_CurrElemID;
+
         } 
         addVert(px, py, color);
 
     }
-    m_VertIdx[m_NextElemPos] = startVertIdx/m_nVertexVals;
-    m_VertIdx[m_NextElemPos+1] = (m_NextVertPos-m_nVertexVals)/m_nVertexVals;
-    m_VertIdx[m_NextElemPos+2] = startVertIdx/m_nVertexVals + 1;
-    m_NextElemPos += 3;
-    addElementBlock(GL_TRIANGLES, precision*3, 0.0f);
+    m_VertIdx[m_NextElemPos++] = startElemId;
+    m_VertIdx[m_NextElemPos++] = m_CurrElemID-1;
+    m_VertIdx[m_NextElemPos++] = startElemId + 1;
+    addElementBlock(GL_TRIANGLES, precision*3, 0.0f, m_ShaderProgram, nullptr);
 
 }
 
@@ -173,11 +196,36 @@ void ImageBuilder::drawLine(Point2D* ps, int w, Color& color){
         return;
     }
     // Pure OpenGL line
-    m_VertIdx[m_NextElemPos] = addVert(ps[0].x, ps[0].y, color);
-    m_NextElemPos++;
-    m_VertIdx[m_NextElemPos] = addVert(ps[1].x, ps[1].y, color);
-    m_NextElemPos++;
-    addElementBlock(GL_LINE_STRIP, 2, 1.0f*w);
+    m_VertIdx[m_NextElemPos++] = addVert(ps[0].x, ps[0].y, color);
+    m_VertIdx[m_NextElemPos++] = addVert(ps[1].x, ps[1].y, color);
+    addElementBlock(GL_LINE_STRIP, 2, w, m_ShaderProgram, nullptr);
+}
+
+void ImageBuilder::drawPoint(Point2D& pt, unsigned int sz, Color& color){
+    m_VertIdx[m_NextElemPos++] = addVert(pt.x, pt.y, color);
+    addElementBlock(GL_POINTS, 1, sz, m_ShaderProgram, nullptr);
+}
+
+void ImageBuilder::drawImage(ANCHOR a, Point2D& anch, Texture* image, int w, int h, int rot){
+    Point2D* corners = getCornersOfRect(a, anch, w, h, rot);
+    Point2D bl = corners[0], tl = corners[1], br = corners[2], tr = corners[3];
+
+    int blIdx = addVertWithTex(bl.x, bl.y, 0.0f, 0.0f); 
+    int tlIdx = addVertWithTex(tl.x, tl.y, 0.0f, 1.0f); 
+    int brIdx = addVertWithTex(br.x, br.y, 1.0f, 0.0f); 
+    int trIdx = addVertWithTex(tr.x, tr.y, 1.0f, 1.0f); 
+
+    delete[] corners;
+
+    m_VertIdx[m_NextElemPos++] = blIdx;
+    m_VertIdx[m_NextElemPos++] = tlIdx;
+    m_VertIdx[m_NextElemPos++] = brIdx;
+    m_VertIdx[m_NextElemPos++] = trIdx;
+    m_VertIdx[m_NextElemPos++] = brIdx;
+    m_VertIdx[m_NextElemPos++] = tlIdx;
+
+
+    addElementBlock(GL_TRIANGLE_STRIP, 6, 0.0f, m_TexShaderProgram, image);
 }
 
 void ImageBuilder::setDimensions(int w, int h){
@@ -188,17 +236,17 @@ void ImageBuilder::setDimensions(int w, int h){
 void ImageBuilder::compileShaders(){
     // ----------------------------------------------------
     //
-    // Create and compile vertex shader
+    // Create and compile vertex shaders
     //
     // ----------------------------------------------------
+    int success;
 
 
     unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
+    unsigned int texVertexShader = glCreateShader(GL_VERTEX_SHADER);
 
     glShaderSource(vertexShader, 1, &m_VertexShaderSrc, NULL);
     glCompileShader(vertexShader);
-
-    int success;
     glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
 
     if(!success){
@@ -207,29 +255,46 @@ void ImageBuilder::compileShaders(){
         std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
     }
 
+    glShaderSource(texVertexShader, 1, &m_TexVertexShaderSrc, NULL);
+    glCompileShader(texVertexShader);
+    glGetShaderiv(texVertexShader, GL_COMPILE_STATUS, &success);
+    if(!success){
+        char infoLog[512];
+        glGetShaderInfoLog(texVertexShader, 512, NULL, infoLog);
+        std::cout << "ERROR::SHADER::TEXTURE_VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
+    }
+
     // ----------------------------------------------------
     //
-    // Create and compile fragment shader (color)
+    // Create and compile fragment shaders (color)
     //
     // ----------------------------------------------------
     
 
     unsigned int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+    unsigned int texFragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
 
     glShaderSource(fragmentShader, 1, &m_FragmentShaderSrc, NULL);
     glCompileShader(fragmentShader);
-
     glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-
     if(!success){
         char infoLog[512];
         glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
         std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
     }
 
+    glShaderSource(texFragmentShader, 1, &m_FragmentShaderSrc, NULL);
+    glCompileShader(texFragmentShader);
+    glGetShaderiv(texFragmentShader, GL_COMPILE_STATUS, &success);
+    if(!success){
+        char infoLog[512];
+        glGetShaderInfoLog(texFragmentShader, 512, NULL, infoLog);
+        std::cout << "ERROR::SHADER::TEXTURE_FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
+    }
+
     // ----------------------------------------------------
     //
-    // Build shader program by linking shaders
+    // Build shader programs by linking shaders
     //
     // ----------------------------------------------------
     
@@ -238,18 +303,29 @@ void ImageBuilder::compileShaders(){
     glAttachShader(m_ShaderProgram, vertexShader);
     glAttachShader(m_ShaderProgram, fragmentShader);
     glLinkProgram(m_ShaderProgram);
-
     glGetProgramiv(m_ShaderProgram, GL_LINK_STATUS, &success);
-
     if(!success) {
         char infoLog[512];
         glGetProgramInfoLog(m_ShaderProgram, 512, NULL, infoLog);
         std::cout << "ERROR::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
     }
 
+    m_TexShaderProgram = glCreateProgram();
+    glAttachShader(m_TexShaderProgram, texVertexShader);
+    glAttachShader(m_TexShaderProgram, texFragmentShader);
+    glLinkProgram(m_TexShaderProgram);
+    glGetProgramiv(m_TexShaderProgram, GL_LINK_STATUS, &success);
+    if(!success) {
+        char infoLog[512];
+        glGetProgramInfoLog(m_TexShaderProgram, 512, NULL, infoLog);
+        std::cout << "ERROR::TEXTURE_PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
+    }
+
     glUseProgram(m_ShaderProgram);
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
+    glDeleteShader(texVertexShader);
+    glDeleteShader(texFragmentShader);
 }
 
 void ImageBuilder::submit(){   
@@ -277,16 +353,23 @@ void ImageBuilder::submit(){
     // Should NOT be normalized (clamp to [-1, 1] or [0,1])
     // 2 vertices are separated by 20 bytes
     // first vertex starts at position 0 (last param)
+
+    // No-Texture vertex attrib
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 6*sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 6*sizeof(float), (void*)(2*sizeof(float)));
     glEnableVertexAttribArray(1);
+    
+    //With-Texture vertex attrib
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 4*sizeof(float), (void*)0);
+    glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, 4*sizeof(float), (void*)(2*sizeof(float)));
 
     
     glClearColor( 1.0f, 1.0f, 1.0f, 0.0f );
     glClear(GL_COLOR_BUFFER_BIT);
 
-
+    unsigned int currProgram = m_ShaderProgram;
+    bool currWithTex = false;
     glUseProgram(m_ShaderProgram);
     glBindVertexArray(m_VAO); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
     
@@ -294,13 +377,42 @@ void ImageBuilder::submit(){
     std::cout << "There are " << nBlock << " elem blocks" << std::endl;
     for(int i = 0; i < nBlock; i++){
         ElementBlock block = m_ElemBlocks[i];
+        
         std::cout << "Drawing block of mode " << block.mode << " from " << block.start << " of " << block.cnt << " size " << block.size;
+        
+        if(block.shdrProg != currProgram){
+            glUseProgram(block.shdrProg);
+            currProgram = block.shdrProg;
+        }
+
+        if(block.texture == nullptr){
+            if(currWithTex){
+                glDisableVertexAttribArray(2);
+                glDisableVertexAttribArray(3);
+                glEnableVertexAttribArray(0);
+                glEnableVertexAttribArray(1);
+            }
+            currWithTex = false;
+
+        } else {
+            if(!currWithTex){
+                glDisableVertexAttribArray(0);
+                glDisableVertexAttribArray(1);
+                glEnableVertexAttribArray(2);
+                glEnableVertexAttribArray(3);
+            }
+            currWithTex = true;
+            glBindTexture(GL_TEXTURE_2D, block.texture->getID());
+        }
+
         if(block.mode == GL_LINES || block.mode == GL_LINE_STRIP || block.mode == GL_LINE_LOOP){
             glLineWidth(block.size);
         } else if(block.mode == GL_POINTS){
             glPointSize(block.size);
         }
+
         glDrawElements(block.mode, block.cnt, GL_UNSIGNED_INT, (void*)(block.start*sizeof(unsigned int)));
+        
         std::cout << " Error?: " << errno << std::endl;
         
     }

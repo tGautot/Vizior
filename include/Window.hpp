@@ -19,7 +19,6 @@
 #include <GLFW/glfw3.h>
 #include <memory>
 #include <iostream>
-#include <string>
 
 namespace Vizior {
 

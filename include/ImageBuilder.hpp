@@ -18,6 +18,7 @@
 #include <cstdint>
 #include <iostream>
 #include "Point2D.hpp"
+#include "Texture.hpp"
 
 // Maybe forward declaration of class is bad, read about it
 class Window;
@@ -35,7 +36,9 @@ namespace Vizior {
     typedef struct {
         GLenum mode;
         int start, cnt;
-        float size; // Used for points and lines
+        unsigned int size; // Used for points and lines
+        unsigned int shdrProg; // Used for tex and later for custom shaders
+        Texture* texture;
     } ElementBlock;
 
 
@@ -59,6 +62,8 @@ namespace Vizior {
         void drawRectangle(ANCHOR, Point2D& anch, int w, int h, float rot, Color&);
         void drawCircle(Point2D& anch, int r, Color&);
         void drawLine(Point2D*, int w, Color&);
+        void drawPoint(Point2D& point, unsigned int sz, Color&);
+        void drawImage(ANCHOR, Point2D& anch, Texture* image, int w, int h, int rot);
 
         float* getVerts(){return m_Verts;}
         int getVertCount(){return m_NextVertPos;}
@@ -73,7 +78,8 @@ namespace Vizior {
         void submit();
     private:
         int addVert(int x, int y, Color& color);
-        void addElementBlock(GLenum mode, int vertexCount, float size);
+        int addVertWithTex(int x, int y, float s, float t);
+        void addElementBlock(GLenum mode, int vertexCount, unsigned int size, unsigned int shdrProg, Texture* tex);
         // TODO Make it so people that know how to write shader can modify the shaders used
         // TODO Should probably put shaders somewhere else than directly in window too
         void compileShaders();
@@ -85,16 +91,18 @@ namespace Vizior {
         int m_Width, m_Height;
 
         // Each "vertex" is xyrgba
-        const int m_nVertexVals = 6; // number of vals in one "vertex"
-        float* m_Verts; 
-        int m_NextVertPos;
+        const int m_nVertexVals = 6; // number of vals in one "vertex" (xyrgba)
+        const int m_nTexVertexVals = 4; // number of vals in one "vertex" when there are textures (xyst)
+        float* m_Verts; // All vertex info (xyrgba or xyst) 
+        int m_NextVertPos; // Next pos to put vertex info, in above arrays
         unsigned int* m_VertIdx; // Our EBO buffer
-        int m_NextElemPos;
+        int m_NextElemPos; // Next pos to fill in m_VertIdx
+        int m_CurrElemID; // The number of complete vertex in the array (should be nextpos/nVals)
 
         ElementBlock* m_ElemBlocks;
         int m_NextElemBlockPos;
 
-        unsigned int m_ShaderProgram, m_EBO, m_VAO, m_VBO;
+        unsigned int m_ShaderProgram, m_TexShaderProgram, m_EBO, m_VAO, m_VBO;
         const char* m_VertexShaderSrc = 
             "#version 330 core\n"
             "layout (location = 0) in vec2 aPos;\n"
@@ -110,6 +118,24 @@ namespace Vizior {
             "out vec4 FragColor;\n"
             "void main()\n"
             "{ FragColor = vertexColor; }\n\0";
+
+        const char* m_TexVertexShaderSrc = 
+            "#version 330 core\n"
+            "layout (location = 0) in vec2 aPos;\n"
+            "layout (location = 1) in vec2 aTexPos;\n"
+            "out vec2 texPos;\n"
+            "void main()\n"
+            "{ texPos = aTexPos;"
+            "gl_Position = vec4(aPos.x, aPos.y, 0.0, 1.0);}\n\0";
+    
+        const char* m_TexFragmentShaderSrc =
+            "#version 330 core\n"
+            "in vec4 texPos;\n"
+            "uniform sampler2D tex;"
+            "out vec4 FragColor;\n"
+            "void main()\n"
+            "{ FragColor = texture(tex, texPos); }\n\0";
+
     };
 }
 

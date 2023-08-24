@@ -1,5 +1,6 @@
 #ifndef VIZIOR_H
 #define VIZIOR_H
+
 #include <string>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -9,6 +10,7 @@
 #include <unistd.h> // for sleep
 #include "ImageBuilder.hpp"
 #include "Window.hpp"
+
 
 namespace Vizior {
 
