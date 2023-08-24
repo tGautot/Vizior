@@ -42,18 +42,21 @@ ImageBuilder::~ImageBuilder(){
 }
 
 int ImageBuilder::addVert(int x, int y, Color& color){
+    return addVert(x,y,color,0.0f,0.0f);
+}
+
+Color nilColor = {0,0,0,0};
+int ImageBuilder::addVert(int x, int y, float s, float t){
+    return addVert(x,y,nilColor,s,t);
+}
+
+int ImageBuilder::addVert(int x, int y, Color& color, float s, float t){
     m_Verts[m_NextVertPos++] = (2.0f * x/m_Width) -1;
     m_Verts[m_NextVertPos++] = (2.0f * y/m_Height) -1;
     m_Verts[m_NextVertPos++] = color.r/255.0;
     m_Verts[m_NextVertPos++] = color.g/255.0;
     m_Verts[m_NextVertPos++] = color.b/255.0;
     m_Verts[m_NextVertPos++] = color.a/255.0;
-    return m_CurrElemID++;
-}
-
-int ImageBuilder::addVertWithTex(int x, int y, float s, float t){
-    m_Verts[m_NextVertPos++] = (2.0f * x/m_Width) -1;
-    m_Verts[m_NextVertPos++] = (2.0f * y/m_Height) -1;
     m_Verts[m_NextVertPos++] = s;
     m_Verts[m_NextVertPos++] = t;
     return m_CurrElemID++;
@@ -210,10 +213,10 @@ void ImageBuilder::drawImage(ANCHOR a, Point2D& anch, Texture* image, int w, int
     Point2D* corners = getCornersOfRect(a, anch, w, h, rot);
     Point2D bl = corners[0], tl = corners[1], br = corners[2], tr = corners[3];
 
-    int blIdx = addVertWithTex(bl.x, bl.y, 0.0f, 0.0f); 
-    int tlIdx = addVertWithTex(tl.x, tl.y, 0.0f, 1.0f); 
-    int brIdx = addVertWithTex(br.x, br.y, 1.0f, 0.0f); 
-    int trIdx = addVertWithTex(tr.x, tr.y, 1.0f, 1.0f); 
+    int blIdx = addVert(bl.x, bl.y, 0.0f, 0.0f); 
+    int tlIdx = addVert(tl.x, tl.y, 0.0f, 1.0f); 
+    int brIdx = addVert(br.x, br.y, 1.0f, 0.0f); 
+    int trIdx = addVert(tr.x, tr.y, 1.0f, 1.0f); 
 
     delete[] corners;
 
@@ -225,7 +228,7 @@ void ImageBuilder::drawImage(ANCHOR a, Point2D& anch, Texture* image, int w, int
     m_VertIdx[m_NextElemPos++] = tlIdx;
 
 
-    addElementBlock(GL_TRIANGLE_STRIP, 6, 0.0f, m_TexShaderProgram, image);
+    addElementBlock(GL_TRIANGLE_STRIP, 6, 0.0f, m_ShaderProgram, image);
 }
 
 void ImageBuilder::setDimensions(int w, int h){
@@ -255,15 +258,6 @@ void ImageBuilder::compileShaders(){
         std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
     }
 
-    glShaderSource(texVertexShader, 1, &m_TexVertexShaderSrc, NULL);
-    glCompileShader(texVertexShader);
-    glGetShaderiv(texVertexShader, GL_COMPILE_STATUS, &success);
-    if(!success){
-        char infoLog[512];
-        glGetShaderInfoLog(texVertexShader, 512, NULL, infoLog);
-        std::cout << "ERROR::SHADER::TEXTURE_VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
-    }
-
     // ----------------------------------------------------
     //
     // Create and compile fragment shaders (color)
@@ -283,15 +277,7 @@ void ImageBuilder::compileShaders(){
         std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
     }
 
-    glShaderSource(texFragmentShader, 1, &m_FragmentShaderSrc, NULL);
-    glCompileShader(texFragmentShader);
-    glGetShaderiv(texFragmentShader, GL_COMPILE_STATUS, &success);
-    if(!success){
-        char infoLog[512];
-        glGetShaderInfoLog(texFragmentShader, 512, NULL, infoLog);
-        std::cout << "ERROR::SHADER::TEXTURE_FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
-    }
-
+   
     // ----------------------------------------------------
     //
     // Build shader programs by linking shaders
@@ -310,22 +296,9 @@ void ImageBuilder::compileShaders(){
         std::cout << "ERROR::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
     }
 
-    m_TexShaderProgram = glCreateProgram();
-    glAttachShader(m_TexShaderProgram, texVertexShader);
-    glAttachShader(m_TexShaderProgram, texFragmentShader);
-    glLinkProgram(m_TexShaderProgram);
-    glGetProgramiv(m_TexShaderProgram, GL_LINK_STATUS, &success);
-    if(!success) {
-        char infoLog[512];
-        glGetProgramInfoLog(m_TexShaderProgram, 512, NULL, infoLog);
-        std::cout << "ERROR::TEXTURE_PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
-    }
-
     glUseProgram(m_ShaderProgram);
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
-    glDeleteShader(texVertexShader);
-    glDeleteShader(texFragmentShader);
 }
 
 void ImageBuilder::submit(){   
@@ -355,15 +328,12 @@ void ImageBuilder::submit(){
     // first vertex starts at position 0 (last param)
 
     // No-Texture vertex attrib
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 6*sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, m_nVertexVals*sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 6*sizeof(float), (void*)(2*sizeof(float)));
+    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, m_nVertexVals*sizeof(float), (void*)(2*sizeof(float)));
     glEnableVertexAttribArray(1);
-    
-    //With-Texture vertex attrib
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 4*sizeof(float), (void*)0);
-    glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, 4*sizeof(float), (void*)(2*sizeof(float)));
-
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, m_nVertexVals*sizeof(float), (void*)(6*sizeof(float)));
+    glEnableVertexAttribArray(2);
     
     glClearColor( 1.0f, 1.0f, 1.0f, 0.0f );
     glClear(GL_COLOR_BUFFER_BIT);
@@ -372,7 +342,10 @@ void ImageBuilder::submit(){
     bool currWithTex = false;
     glUseProgram(m_ShaderProgram);
     glBindVertexArray(m_VAO); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
-    
+
+    int useTexLocation = glGetUniformLocation(m_ShaderProgram, "useTex");
+    glUniform1f(useTexLocation, 0.0f);
+
     int nBlock = getElemBlockCount();
     std::cout << "There are " << nBlock << " elem blocks" << std::endl;
     for(int i = 0; i < nBlock; i++){
@@ -386,22 +359,14 @@ void ImageBuilder::submit(){
         }
 
         if(block.texture == nullptr){
-            if(currWithTex){
-                glDisableVertexAttribArray(2);
-                glDisableVertexAttribArray(3);
-                glEnableVertexAttribArray(0);
-                glEnableVertexAttribArray(1);
-            }
             currWithTex = false;
+            int useTexLocation = glGetUniformLocation(m_ShaderProgram, "useTex");
+            glUniform1f(useTexLocation, 0.0f);
 
         } else {
-            if(!currWithTex){
-                glDisableVertexAttribArray(0);
-                glDisableVertexAttribArray(1);
-                glEnableVertexAttribArray(2);
-                glEnableVertexAttribArray(3);
-            }
             currWithTex = true;
+            int useTexLocation = glGetUniformLocation(m_ShaderProgram, "useTex");
+            glUniform1f(useTexLocation, 1.0f);
             glBindTexture(GL_TEXTURE_2D, block.texture->getID());
         }
 

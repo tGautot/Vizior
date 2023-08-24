@@ -33,13 +33,13 @@ void loop(int frameCount){
         {center, botl}
     };
 
-    if(frameCount > 20){
+    if(frameCount > 10){
         src1->drawTriangle(t1, Vizior::RED);
         src1->drawTriangle(t2, Vizior::BLU);
+        src1->drawImage(Vizior::ANCHOR_TL, center, containerImage, 200,200,0);
         for(int i = 0; i < 4; i++){
             src1->drawLine(l[i],(i+1)*4,Vizior::GRN);
         }
-        src1->drawImage(Vizior::ANCHOR_TL, center, containerImage, 200,200,0);
         src1->drawCircle(center,55,Vizior::BLK);
         Vizior::Color PNK{255,9*16+9,14*16+14};
         src1->drawPoint(pt, 100, PNK);

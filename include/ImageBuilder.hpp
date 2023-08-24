@@ -78,7 +78,8 @@ namespace Vizior {
         void submit();
     private:
         int addVert(int x, int y, Color& color);
-        int addVertWithTex(int x, int y, float s, float t);
+        int addVert(int x, int y, float s, float t);
+        int addVert(int x, int y, Color& color, float s, float t);
         void addElementBlock(GLenum mode, int vertexCount, unsigned int size, unsigned int shdrProg, Texture* tex);
         // TODO Make it so people that know how to write shader can modify the shaders used
         // TODO Should probably put shaders somewhere else than directly in window too
@@ -91,8 +92,7 @@ namespace Vizior {
         int m_Width, m_Height;
 
         // Each "vertex" is xyrgba
-        const int m_nVertexVals = 6; // number of vals in one "vertex" (xyrgba)
-        const int m_nTexVertexVals = 4; // number of vals in one "vertex" when there are textures (xyst)
+        const int m_nVertexVals = 8; // number of vals in one "vertex" (xyrgbast)
         float* m_Verts; // All vertex info (xyrgba or xyst) 
         int m_NextVertPos; // Next pos to put vertex info, in above arrays
         unsigned int* m_VertIdx; // Our EBO buffer
@@ -102,39 +102,28 @@ namespace Vizior {
         ElementBlock* m_ElemBlocks;
         int m_NextElemBlockPos;
 
-        unsigned int m_ShaderProgram, m_TexShaderProgram, m_EBO, m_VAO, m_VBO;
+        unsigned int m_ShaderProgram, m_EBO, m_VAO, m_VBO;
         const char* m_VertexShaderSrc = 
             "#version 330 core\n"
             "layout (location = 0) in vec2 aPos;\n"
             "layout (location = 1) in vec4 aColor;\n"
+            "layout (location = 2) in vec2 aTexPos;\n"
             "out vec4 vertexColor;\n"
+            "out vec2 texPos;\n"
             "void main()\n"
-            "{ vertexColor = aColor;"
-            "gl_Position = vec4(aPos.x, aPos.y, 0.0, 1.0);}\n\0";
+            "{ vertexColor = aColor; texPos = aTexPos;\n"
+            "gl_Position = vec4(aPos.xy, 0.0, 1.0);}\n\0";
     
         const char* m_FragmentShaderSrc =
             "#version 330 core\n"
             "in vec4 vertexColor;\n"
+            "in vec2 texPos;\n"
             "out vec4 FragColor;\n"
+            "uniform sampler2D boundTex;\n"
+            "uniform float useTex;\n"
             "void main()\n"
-            "{ FragColor = vertexColor; }\n\0";
+            "{ FragColor = abs(useTex-1.0)*vertexColor + useTex * texture(boundTex, texPos); }\n\0";
 
-        const char* m_TexVertexShaderSrc = 
-            "#version 330 core\n"
-            "layout (location = 0) in vec2 aPos;\n"
-            "layout (location = 1) in vec2 aTexPos;\n"
-            "out vec2 texPos;\n"
-            "void main()\n"
-            "{ texPos = aTexPos;"
-            "gl_Position = vec4(aPos.x, aPos.y, 0.0, 1.0);}\n\0";
-    
-        const char* m_TexFragmentShaderSrc =
-            "#version 330 core\n"
-            "in vec4 texPos;\n"
-            "uniform sampler2D tex;"
-            "out vec4 FragColor;\n"
-            "void main()\n"
-            "{ FragColor = texture(tex, texPos); }\n\0";
 
     };
 }
