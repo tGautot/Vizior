@@ -13,7 +13,8 @@ set( GLFW_INSTALL OFF CACHE BOOL  "GLFW lib only" )
 SET( GCC_COVERAGE_COMPILE_FLAGS "-Wwrite-strings" )
 
 add_subdirectory( external/glfw )
+add_subdirectory( external/FreeType )
    
-add_executable( Vizior WIN32 src/main.cpp src/glad.c src/Point2D.cpp src/ImageBuilder.cpp src/Window.cpp src/stbImageLoader.cpp src/Texture.cpp src/Vizior.cpp )
-target_link_libraries( Vizior ${OPENGL_LIBRARIES} glfw )
-target_include_directories( Vizior PUBLIC ./include PUBLIC external/glfw/include PUBLIC external )
+add_executable( Vizior WIN32 src/main.cpp src/glad.c src/Point2D.cpp src/ImageBuilder.cpp src/Window.cpp src/stbImageLoader.cpp src/Texture.cpp src/FontManager.cpp src/Vizior.cpp )
+target_link_libraries( Vizior ${OPENGL_LIBRARIES} glfw freetype )
+target_include_directories( Vizior PUBLIC ./include PUBLIC external/glfw/include PUBLIC external/FreeType/include PUBLIC external )

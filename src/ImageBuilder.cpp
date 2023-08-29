@@ -19,14 +19,12 @@ ImageBuilder::ImageBuilder(){
     m_NextElemBlockPos = 0;
     m_CurrElemID = 0;
 
+    m_FontManager = FontManager::getInstance();
+
     glGetFloatv(GL_ALIASED_LINE_WIDTH_RANGE, m_LineWidthRange);
     glEnable(GL_MULTISAMPLE);
-
-    // Texture parameters
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     std::cout << "Max pure ogl line width is " << m_LineWidthRange[1] << std::endl;
     // Will be set for real once bound to a window, polly not needed
@@ -161,28 +159,30 @@ void ImageBuilder::drawRectangle(ANCHOR a, Point2D& anch, int w, int h, float ro
     addElementBlock(GL_TRIANGLE_STRIP, 6, 0.0f, m_ShaderProgram, nullptr);
 }
 
+// TODO better ways to draw cricle probably
 void ImageBuilder::drawCircle(Point2D& center, int r, Color& color){
-    int startElemId = m_CurrElemID;
-    // Center Point
-    addVert(center.x, center.y, color);
+    // Center point
+    int startElemId = addVert(center.x, center.y, color);
 
     int precision = 180;
     // Circle points
+    int last = -1, beforeLast = -1, first=-1;
     for(int i = 0; i < precision; i++){
         int px = center.x + cos(M_PI * i*2 / precision) * r;
         int py = center.y + sin(M_PI * i*2 / precision) * r;
+        beforeLast = last;
+        last = addVert(px, py, color);
         if(i >= 1){
             m_VertIdx[m_NextElemPos++] = startElemId;
-            m_VertIdx[m_NextElemPos++] = m_CurrElemID-1;
-            m_VertIdx[m_NextElemPos++] = m_CurrElemID;
-
+            m_VertIdx[m_NextElemPos++] = beforeLast;
+            m_VertIdx[m_NextElemPos++] = last;
         } 
-        addVert(px, py, color);
+        if(i == 0){ first = last;}
 
     }
     m_VertIdx[m_NextElemPos++] = startElemId;
-    m_VertIdx[m_NextElemPos++] = m_CurrElemID-1;
-    m_VertIdx[m_NextElemPos++] = startElemId + 1;
+    m_VertIdx[m_NextElemPos++] = last;
+    m_VertIdx[m_NextElemPos++] = first;
     addElementBlock(GL_TRIANGLES, precision*3, 0.0f, m_ShaderProgram, nullptr);
 
 }
@@ -227,9 +227,52 @@ void ImageBuilder::drawImage(ANCHOR a, Point2D& anch, Texture* image, int w, int
     m_VertIdx[m_NextElemPos++] = brIdx;
     m_VertIdx[m_NextElemPos++] = tlIdx;
 
-
     addElementBlock(GL_TRIANGLE_STRIP, 6, 0.0f, m_ShaderProgram, image);
 }
+
+void ImageBuilder::drawText(ANCHOR a, Point2D& anch, std::string text, Color& col, const char* fontName, float scale, int rot){
+    // Code mostly copied from https://learnopengl.com/In-Practice/Text-Rendering
+
+    // iterate through all characters
+    std::string::const_iterator c;
+    int x = anch.x, y = anch.y, blIdx, tlIdx, brIdx, trIdx;
+    Point2D bl, tl, br, tr, nxtPos;
+    Point2D* corners;
+    for (c = text.begin(); c != text.end(); c++)
+    {
+        Glyph* glyph = m_FontManager->getGlyph(*c, fontName);
+
+        int xpos = x + (int)(glyph->bmL * scale);
+        int ypos = y - (int)(glyph->h - glyph->bmT * scale);
+
+        int w = (int)(glyph->w * scale);
+        int h = (int)(glyph->h * scale);
+        nxtPos = {xpos, ypos};
+        corners = getCornersOfRect(ANCHOR_BL, nxtPos, w, h, rot);
+        bl = corners[0], tl = corners[1], br = corners[2], tr = corners[3];
+
+        blIdx = addVert(bl.x, bl.y, col, 0.0f, 1.0f); 
+        tlIdx = addVert(tl.x, tl.y, col, 0.0f, 0.0f); 
+        brIdx = addVert(br.x, br.y, col, 1.0f, 1.0f); 
+        trIdx = addVert(tr.x, tr.y, col, 1.0f, 0.0f); 
+
+        delete[] corners;
+
+        m_VertIdx[m_NextElemPos++] = blIdx;
+        m_VertIdx[m_NextElemPos++] = tlIdx;
+        m_VertIdx[m_NextElemPos++] = brIdx;
+        m_VertIdx[m_NextElemPos++] = trIdx;
+        m_VertIdx[m_NextElemPos++] = brIdx;
+        m_VertIdx[m_NextElemPos++] = tlIdx;
+
+
+        addElementBlock(GL_TRIANGLE_STRIP, 6, 0.0f, m_ShaderProgram, glyph->tex);
+        
+        // now advance cursors for next glyph (note that advance is number of 1/64 pixels)
+        x += (glyph->advance >> 6) * scale; // bitshift by 6 to get value in pixels (2^6 = 64)
+    }
+}
+
 
 void ImageBuilder::setDimensions(int w, int h){
     m_Width = w;
@@ -351,8 +394,8 @@ void ImageBuilder::submit(){
     for(int i = 0; i < nBlock; i++){
         ElementBlock block = m_ElemBlocks[i];
         
-        std::cout << "Drawing block of mode " << block.mode << " from " << block.start << " of " << block.cnt << " size " << block.size;
-        
+        std::cout << "Drawing block of mode " << block.mode << " from " << block.start << " of " << block.cnt << " elements, size " << block.size << " and texture " << block.texture << std::endl;
+
         if(block.shdrProg != currProgram){
             glUseProgram(block.shdrProg);
             currProgram = block.shdrProg;
@@ -360,13 +403,13 @@ void ImageBuilder::submit(){
 
         if(block.texture == nullptr){
             currWithTex = false;
-            int useTexLocation = glGetUniformLocation(m_ShaderProgram, "useTex");
-            glUniform1f(useTexLocation, 0.0f);
+            int useModeLocation = glGetUniformLocation(m_ShaderProgram, "useMode");
+            glUniform1i(useModeLocation, 0);
 
         } else {
             currWithTex = true;
-            int useTexLocation = glGetUniformLocation(m_ShaderProgram, "useTex");
-            glUniform1f(useTexLocation, 1.0f);
+            int useModeLocation = glGetUniformLocation(m_ShaderProgram, "useMode");
+            glUniform1i(useModeLocation, 1);
             glBindTexture(GL_TEXTURE_2D, block.texture->getID());
         }
 
@@ -375,11 +418,7 @@ void ImageBuilder::submit(){
         } else if(block.mode == GL_POINTS){
             glPointSize(block.size);
         }
-
-        glDrawElements(block.mode, block.cnt, GL_UNSIGNED_INT, (void*)(block.start*sizeof(unsigned int)));
-        
-        std::cout << " Error?: " << errno << std::endl;
-        
+        glDrawElements(block.mode, block.cnt, GL_UNSIGNED_INT, (void*)(block.start*sizeof(unsigned int)));        
     }
     
 

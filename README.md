@@ -7,7 +7,12 @@ The goal of vizior is to bring to C++ the experience of using [p5js](https://p5j
  - [x] Handle multiple windows
  - [x] Make it cpp  (classes)
  - [x] Make Loop
- - [ ] Draw lines
- - [ ] Draw Points
- - [ ] Draw Sprite
+ - [x] Draw lines
+ - [x] Draw Points
+ - [x] Draw Sprite
  - [ ] Draw Text
+ - [ ] Enable alpha channel
+ - [ ] Continuous integration
+ - [ ] Simple camera
+ - [ ] Pipe Inputs
+ - [ ] ?Custom Shaders?

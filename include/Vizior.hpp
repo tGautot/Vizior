@@ -8,6 +8,7 @@
 #include <cmath>
 #include <vector>
 #include <unistd.h> // for sleep
+#include <stb_image.h>
 #include "ImageBuilder.hpp"
 #include "Window.hpp"
 
@@ -21,6 +22,7 @@ namespace Vizior {
     extern std::vector<std::shared_ptr<Window>> windows;
     
     unsigned int registerWindow(std::shared_ptr<Window> win);
+    unsigned int registerFont(const char* path);
     void setLoopFunc(loop_func loop);
     void Start();
     

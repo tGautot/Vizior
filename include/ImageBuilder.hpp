@@ -17,8 +17,10 @@
 #include <math.h>
 #include <cstdint>
 #include <iostream>
+#include <string>
 #include "Point2D.hpp"
 #include "Texture.hpp"
+#include "FontManager.hpp"
 
 // Maybe forward declaration of class is bad, read about it
 class Window;
@@ -64,6 +66,7 @@ namespace Vizior {
         void drawLine(Point2D*, int w, Color&);
         void drawPoint(Point2D& point, unsigned int sz, Color&);
         void drawImage(ANCHOR, Point2D& anch, Texture* image, int w, int h, int rot);
+        void drawText(ANCHOR, Point2D& anch, std::string text, Color& col, const char* fontName, float scale, int rot);
 
         float* getVerts(){return m_Verts;}
         int getVertCount(){return m_NextVertPos;}
@@ -90,6 +93,9 @@ namespace Vizior {
 
         // Drawing space dimensions
         int m_Width, m_Height;
+
+        // For text rendering
+        FontManager* m_FontManager;
 
         // Each "vertex" is xyrgba
         const int m_nVertexVals = 8; // number of vals in one "vertex" (xyrgbast)
@@ -120,9 +126,9 @@ namespace Vizior {
             "in vec2 texPos;\n"
             "out vec4 FragColor;\n"
             "uniform sampler2D boundTex;\n"
-            "uniform float useTex;\n"
+            "uniform int useMode;\n"
             "void main()\n"
-            "{ FragColor = abs(useTex-1.0)*vertexColor + useTex * texture(boundTex, texPos); }\n\0";
+            "{ FragColor = int(useMode==0)*vertexColor + int(useMode==1) * texture(boundTex, texPos) + int(useMode == 2) * vec4(vertexColor.rgb, vertexColor.a * texture(boundTex, texPos).r); }\n\0";
 
 
     };
