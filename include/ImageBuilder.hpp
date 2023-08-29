@@ -21,6 +21,7 @@
 #include "Point2D.hpp"
 #include "Texture.hpp"
 #include "FontManager.hpp"
+#include "Shaders.hpp"
 
 // Maybe forward declaration of class is bad, read about it
 class Window;
@@ -86,7 +87,7 @@ namespace Vizior {
         void addElementBlock(GLenum mode, int vertexCount, unsigned int size, unsigned int shdrProg, Texture* tex);
         // TODO Make it so people that know how to write shader can modify the shaders used
         // TODO Should probably put shaders somewhere else than directly in window too
-        void compileShaders();
+        void compileBaseShaders();
 
         // OpenGL related values
         GLfloat m_LineWidthRange[2] = {0.0f, 0.0f};
@@ -108,28 +109,8 @@ namespace Vizior {
         ElementBlock* m_ElemBlocks;
         int m_NextElemBlockPos;
 
-        unsigned int m_ShaderProgram, m_EBO, m_VAO, m_VBO;
-        const char* m_VertexShaderSrc = 
-            "#version 330 core\n"
-            "layout (location = 0) in vec2 aPos;\n"
-            "layout (location = 1) in vec4 aColor;\n"
-            "layout (location = 2) in vec2 aTexPos;\n"
-            "out vec4 vertexColor;\n"
-            "out vec2 texPos;\n"
-            "void main()\n"
-            "{ vertexColor = aColor; texPos = aTexPos;\n"
-            "gl_Position = vec4(aPos.xy, 0.0, 1.0);}\n\0";
-    
-        const char* m_FragmentShaderSrc =
-            "#version 330 core\n"
-            "in vec4 vertexColor;\n"
-            "in vec2 texPos;\n"
-            "out vec4 FragColor;\n"
-            "uniform sampler2D boundTex;\n"
-            "uniform int useMode;\n"
-            "void main()\n"
-            "{ FragColor = int(useMode==0)*vertexColor + int(useMode==1) * texture(boundTex, texPos) + int(useMode == 2) * vec4(vertexColor.rgb, vertexColor.a * texture(boundTex, texPos).r); }\n\0";
-
+        unsigned int m_EBO, m_VAO, m_VBO;
+        Shader *m_BaseShdr, *m_TexShdr, *m_GlyphShdr; 
 
     };
 }

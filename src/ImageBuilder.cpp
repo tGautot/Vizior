@@ -30,13 +30,61 @@ ImageBuilder::ImageBuilder(){
     // Will be set for real once bound to a window, polly not needed
     m_Width = 100;
     m_Height = 100;
-    compileShaders();
+    compileBaseShaders();
+    m_BaseShdr->use();
+}
+
+void ImageBuilder::compileBaseShaders(){
+    const char* vertexShaderSrc = 
+        "#version 330 core\n"
+        "layout (location = 0) in vec2 aPos;\n"
+        "layout (location = 1) in vec4 aColor;\n"
+        "layout (location = 2) in vec2 aTexPos;\n"
+        "out vec4 vertexColor;\n"
+        "out vec2 texPos;\n"
+        "void main()\n"
+        "{ vertexColor = aColor; texPos = aTexPos;\n"
+        "gl_Position = vec4(aPos.xy, 0.0, 1.0);}\n\0";
+
+    const char* baseFragmentShaderSrc =
+        "#version 330 core\n"
+        "in vec4 vertexColor;\n"
+        "in vec2 texPos;\n"
+        "out vec4 FragColor;\n"
+        "void main()\n"
+        "{ FragColor = vertexColor; }\n\0";
+
+    const char* texFragmentShaderSrc =
+        "#version 330 core\n"
+        "in vec4 vertexColor;\n"
+        "in vec2 texPos;\n"
+        "out vec4 FragColor;\n"
+        "uniform sampler2D boundTex;\n"
+        "void main()\n"
+        "{ FragColor = texture(boundTex, texPos); }\n\0";
+
+    const char* textFragmentShaderSrc =
+        "#version 330 core\n"
+        "in vec4 vertexColor;\n"
+        "in vec2 texPos;\n"
+        "out vec4 FragColor;\n"
+        "uniform sampler2D boundTex;\n"
+        "void main()\n"
+        "{ FragColor = vec4(vertexColor.rgb, vertexColor.a * texture(boundTex, texPos).r); }\n\0";
+
+    m_BaseShdr = new Shader(vertexShaderSrc, baseFragmentShaderSrc);
+    m_TexShdr = new Shader(vertexShaderSrc, texFragmentShaderSrc);
+    m_GlyphShdr = new Shader(vertexShaderSrc, textFragmentShaderSrc);
+
 }
 
 ImageBuilder::~ImageBuilder(){
     delete[] m_Verts;
     delete[] m_VertIdx;
     delete[] m_ElemBlocks;
+    delete m_BaseShdr;
+    delete m_TexShdr;
+    delete m_GlyphShdr;
 }
 
 int ImageBuilder::addVert(int x, int y, Color& color){
@@ -90,7 +138,7 @@ void ImageBuilder::drawTriangle(Point2D* ps, Color& color){
         m_VertIdx[m_NextElemPos] = addVert(ps[i].x, ps[i].y, color);
         m_NextElemPos++;
     }
-    addElementBlock(GL_TRIANGLES, 3, 0.0f, m_ShaderProgram, nullptr);
+    addElementBlock(GL_TRIANGLES, 3, 0.0f, m_BaseShdr->getId(), nullptr);
 }
 
 Point2D* getCornersOfRect(ANCHOR a, Point2D& anch, int w, int h, int rot){
@@ -156,7 +204,7 @@ void ImageBuilder::drawRectangle(ANCHOR a, Point2D& anch, int w, int h, float ro
     m_VertIdx[m_NextElemPos++] = tlIdx;
 
 
-    addElementBlock(GL_TRIANGLE_STRIP, 6, 0.0f, m_ShaderProgram, nullptr);
+    addElementBlock(GL_TRIANGLE_STRIP, 6, 0.0f, m_BaseShdr->getId(), nullptr);
 }
 
 // TODO better ways to draw cricle probably
@@ -183,7 +231,7 @@ void ImageBuilder::drawCircle(Point2D& center, int r, Color& color){
     m_VertIdx[m_NextElemPos++] = startElemId;
     m_VertIdx[m_NextElemPos++] = last;
     m_VertIdx[m_NextElemPos++] = first;
-    addElementBlock(GL_TRIANGLES, precision*3, 0.0f, m_ShaderProgram, nullptr);
+    addElementBlock(GL_TRIANGLES, precision*3, 0.0f, m_BaseShdr->getId(), nullptr);
 
 }
 
@@ -201,12 +249,12 @@ void ImageBuilder::drawLine(Point2D* ps, int w, Color& color){
     // Pure OpenGL line
     m_VertIdx[m_NextElemPos++] = addVert(ps[0].x, ps[0].y, color);
     m_VertIdx[m_NextElemPos++] = addVert(ps[1].x, ps[1].y, color);
-    addElementBlock(GL_LINE_STRIP, 2, w, m_ShaderProgram, nullptr);
+    addElementBlock(GL_LINE_STRIP, 2, w, m_BaseShdr->getId(), nullptr);
 }
 
 void ImageBuilder::drawPoint(Point2D& pt, unsigned int sz, Color& color){
     m_VertIdx[m_NextElemPos++] = addVert(pt.x, pt.y, color);
-    addElementBlock(GL_POINTS, 1, sz, m_ShaderProgram, nullptr);
+    addElementBlock(GL_POINTS, 1, sz, m_BaseShdr->getId(), nullptr);
 }
 
 void ImageBuilder::drawImage(ANCHOR a, Point2D& anch, Texture* image, int w, int h, int rot){
@@ -227,7 +275,7 @@ void ImageBuilder::drawImage(ANCHOR a, Point2D& anch, Texture* image, int w, int
     m_VertIdx[m_NextElemPos++] = brIdx;
     m_VertIdx[m_NextElemPos++] = tlIdx;
 
-    addElementBlock(GL_TRIANGLE_STRIP, 6, 0.0f, m_ShaderProgram, image);
+    addElementBlock(GL_TRIANGLE_STRIP, 6, 0.0f, m_TexShdr->getId(), image);
 }
 
 void ImageBuilder::drawText(ANCHOR a, Point2D& anch, std::string text, Color& col, const char* fontName, float scale, int rot){
@@ -266,7 +314,7 @@ void ImageBuilder::drawText(ANCHOR a, Point2D& anch, std::string text, Color& co
         m_VertIdx[m_NextElemPos++] = tlIdx;
 
 
-        addElementBlock(GL_TRIANGLE_STRIP, 6, 0.0f, m_ShaderProgram, glyph->tex);
+        addElementBlock(GL_TRIANGLE_STRIP, 6, 0.0f, m_GlyphShdr->getId(), glyph->tex);
         
         // now advance cursors for next glyph (note that advance is number of 1/64 pixels)
         x += (glyph->advance >> 6) * scale; // bitshift by 6 to get value in pixels (2^6 = 64)
@@ -277,71 +325,6 @@ void ImageBuilder::drawText(ANCHOR a, Point2D& anch, std::string text, Color& co
 void ImageBuilder::setDimensions(int w, int h){
     m_Width = w;
     m_Height = h;
-}
-
-void ImageBuilder::compileShaders(){
-    // ----------------------------------------------------
-    //
-    // Create and compile vertex shaders
-    //
-    // ----------------------------------------------------
-    int success;
-
-
-    unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    unsigned int texVertexShader = glCreateShader(GL_VERTEX_SHADER);
-
-    glShaderSource(vertexShader, 1, &m_VertexShaderSrc, NULL);
-    glCompileShader(vertexShader);
-    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-
-    if(!success){
-        char infoLog[512];
-        glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-        std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
-    }
-
-    // ----------------------------------------------------
-    //
-    // Create and compile fragment shaders (color)
-    //
-    // ----------------------------------------------------
-    
-
-    unsigned int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    unsigned int texFragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-
-    glShaderSource(fragmentShader, 1, &m_FragmentShaderSrc, NULL);
-    glCompileShader(fragmentShader);
-    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-    if(!success){
-        char infoLog[512];
-        glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
-        std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
-    }
-
-   
-    // ----------------------------------------------------
-    //
-    // Build shader programs by linking shaders
-    //
-    // ----------------------------------------------------
-    
-
-    m_ShaderProgram = glCreateProgram();
-    glAttachShader(m_ShaderProgram, vertexShader);
-    glAttachShader(m_ShaderProgram, fragmentShader);
-    glLinkProgram(m_ShaderProgram);
-    glGetProgramiv(m_ShaderProgram, GL_LINK_STATUS, &success);
-    if(!success) {
-        char infoLog[512];
-        glGetProgramInfoLog(m_ShaderProgram, 512, NULL, infoLog);
-        std::cout << "ERROR::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
-    }
-
-    glUseProgram(m_ShaderProgram);
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
 }
 
 void ImageBuilder::submit(){   
@@ -381,13 +364,10 @@ void ImageBuilder::submit(){
     glClearColor( 1.0f, 1.0f, 1.0f, 0.0f );
     glClear(GL_COLOR_BUFFER_BIT);
 
-    unsigned int currProgram = m_ShaderProgram;
+    unsigned int currProgram = m_BaseShdr->getId();
     bool currWithTex = false;
-    glUseProgram(m_ShaderProgram);
+    glUseProgram(currProgram);
     glBindVertexArray(m_VAO); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
-
-    int useTexLocation = glGetUniformLocation(m_ShaderProgram, "useTex");
-    glUniform1f(useTexLocation, 0.0f);
 
     int nBlock = getElemBlockCount();
     std::cout << "There are " << nBlock << " elem blocks" << std::endl;
@@ -403,13 +383,8 @@ void ImageBuilder::submit(){
 
         if(block.texture == nullptr){
             currWithTex = false;
-            int useModeLocation = glGetUniformLocation(m_ShaderProgram, "useMode");
-            glUniform1i(useModeLocation, 0);
-
         } else {
             currWithTex = true;
-            int useModeLocation = glGetUniformLocation(m_ShaderProgram, "useMode");
-            glUniform1i(useModeLocation, 1);
             glBindTexture(GL_TEXTURE_2D, block.texture->getID());
         }
 
