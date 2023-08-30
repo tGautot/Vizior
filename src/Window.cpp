@@ -2,10 +2,16 @@
 
 namespace Vizior {
 
-void glfw_key_callback(GLFWwindow* window, int key, int scancode, int action, int mods){
+/*void glfw_key_callback(GLFWwindow* window, int key, int scancode, int action, int mods){
     std::cout << "GLFW KEY CALLBACK GOT KEY " << key << std::endl;
     Window* viziorWin = (Window*) (glfwGetWindowUserPointer(window));
     viziorWin->keyCallback(key, scancode, action, mods);
+}*/
+
+void glfw_scroll_callback(GLFWwindow* window, double xscroll, double yscroll){
+    std::cout << "GLFW SCROLL CALLBACK GOT YSCROLL " << yscroll << std::endl;
+    Window* viziorWin = (Window*) (glfwGetWindowUserPointer(window));
+    viziorWin->scrollCallback(xscroll, yscroll);
 }
 
 Window::Window(int w, int h, const char* name)
@@ -43,7 +49,8 @@ Window::Window(int w, int h, const char* name)
 
     m_Camera = new LinearCamera({m_Width/2, m_Height/2});
     glfwSetWindowUserPointer(m_glfw_Window, this);
-    glfwSetKeyCallback(m_glfw_Window, glfw_key_callback);
+    //glfwSetKeyCallback(m_glfw_Window, glfw_key_callback);
+    glfwSetScrollCallback(m_glfw_Window, glfw_scroll_callback);
 }
 
 Window::~Window(){
@@ -58,16 +65,15 @@ void Window::drawSource(){
         std::cout << "Trying to draw on window " << m_WinName << " without source" << std::endl;
         return;
     }
-    std::cout << "Trying to draw on window " << m_WinName << std::endl;
         
     m_Src->setCamera(m_Camera);
     m_Src->submit();
 
-    /* Swap front and back buffers */
     glfwSwapBuffers(m_glfw_Window);
 
-    /* Poll for and process events */
+    /* Updates states for getkey */
     glfwPollEvents();
+    updateCamPos();
 }
 
 bool Window::shouldClose(){
@@ -79,20 +85,30 @@ void Window::setSource(std::shared_ptr<ImageBuilder> src){
     src->setDimensions(m_Width, m_Height); 
 }
 
-void Window::keyCallback(int key, int scancode, int action, int mods)
+void Window::updateCamPos()
 {
-    std::cout << "WINDOW KEY CALLBACK GOT KEY " << key << std::endl;
     Point2D camDir{0,0};
-    if (key == GLFW_KEY_W && action != GLFW_RELEASE)
+    if (glfwGetKey(m_glfw_Window, GLFW_KEY_W) != GLFW_RELEASE)
         camDir.y+=1;
-    if (key == GLFW_KEY_S && action != GLFW_RELEASE)
+    if (glfwGetKey(m_glfw_Window, GLFW_KEY_S) != GLFW_RELEASE)
         camDir.y-=1;
-    if (key == GLFW_KEY_A && action != GLFW_RELEASE)
+    if (glfwGetKey(m_glfw_Window, GLFW_KEY_A) != GLFW_RELEASE)
         camDir.x-=1;
-    if (key == GLFW_KEY_D && action != GLFW_RELEASE)
+    if (glfwGetKey(m_glfw_Window, GLFW_KEY_D) != GLFW_RELEASE)
         camDir.x+=1;
 
     m_Camera->movePos(camDir);
+    
+}
+
+void Window::scrollCallback(double x, double y)
+{
+    std::cout << "WINDOW SCROLL CALLBACK GOT VERT " << y << std::endl;
+    
+    // Delta zoom should be small when zoom already far from 1
+    float zm = m_Camera->getZoom();
+
+    m_Camera->setZoom(zm*(1+y/10.0f));
     
 }
 

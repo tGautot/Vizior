@@ -97,8 +97,10 @@ int main(void)
     std::cout << "Created texture from image " << containerImage << " " << containerImage->getID() << std::endl;
     fontManager->registerFont(fontPath, fontName);
     std::cout << "Registered font " << fontName << std::endl;
-    /*win2 = std::make_shared<Vizior::Window>(800,600,winName2);
-    src2 = std::make_shared<Vizior::ImageBuilder>();
+    //win2 = std::make_shared<Vizior::Window>(800,600,winName2);
+    //win2->setSource(src1);
+    //std::cout << "Register window with id " << Vizior::registerWindow(win2) << std::endl;
+    /*src2 = std::make_shared<Vizior::ImageBuilder>();
     win2->setSource(src2);
     std::cout << "Register window with id " << Vizior::registerWindow(win2) << std::endl;*/
     

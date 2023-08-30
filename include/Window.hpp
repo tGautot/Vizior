@@ -36,7 +36,8 @@ namespace Vizior {
         std::shared_ptr<ImageBuilder> getSource(){return m_Src;}
         int getWidth(){return this->m_Width;}
         int getHeight(){return this->m_Height;}
-        void keyCallback(int key, int scancode, int action, int mods);
+        void updateCamPos();
+        void scrollCallback(double horScroll, double vertScroll);
 
         bool shouldClose();
         //std::shared_ptr<Window> getSharedPtr(){return shared_from_this();}

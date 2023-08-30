@@ -20,6 +20,7 @@ public:
 
     void setPos(Point2D pos){m_Pos = pos;}
     Point2D getPos(){return m_Pos;}
+    void setZoom(float z);
     float getZoom(){return m_Zoom;}
 protected:
     Point2D m_Pos;

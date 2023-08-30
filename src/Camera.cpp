@@ -2,6 +2,15 @@
 
 namespace Vizior {
 
+void Camera::setZoom(float z){
+    if(z < 0.0001f){
+        std::cout << "WARNING::CAMERA::SET_ZOOM: tried setting zoom value below minimum treshold, clipping value" << std::endl;
+        m_Zoom = 0.0001f;
+        return;
+    }
+    m_Zoom = z;
+}
+
 LinearCamera::LinearCamera(Point2D sttPos) : Camera(sttPos){
     m_Speed = 3;
 }

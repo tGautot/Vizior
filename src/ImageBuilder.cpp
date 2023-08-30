@@ -403,7 +403,7 @@ void ImageBuilder::submit(){
             glUseProgram(block.shdrProg);
             currProgram = block.shdrProg;
             int loc = glGetUniformLocation(currProgram, "camProps");
-            glUniform4f(loc, camPos.x, camPos.y, camZoom*m_Width, camZoom*m_Height);
+            glUniform4f(loc, camPos.x, camPos.y, m_Width/camZoom, m_Height/camZoom);
         }
 
         if(block.texture == nullptr){
@@ -414,14 +414,14 @@ void ImageBuilder::submit(){
         }
 
         if(block.mode == GL_LINES || block.mode == GL_LINE_STRIP || block.mode == GL_LINE_LOOP){
-            glLineWidth(block.size);
+            glLineWidth(block.size*camZoom);
         } else if(block.mode == GL_POINTS){
-            glPointSize(block.size);
+            glPointSize(block.size*camZoom);
         }
         glDrawElements(block.mode, block.cnt, GL_UNSIGNED_INT, (void*)(block.start*sizeof(unsigned int)));        
     }
     
-
+    // TODO put this somewhere else, here prevents diff windows from having same src
     clearAll();
 
 }
