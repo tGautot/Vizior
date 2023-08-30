@@ -42,9 +42,11 @@ void ImageBuilder::compileBaseShaders(){
         "layout (location = 2) in vec2 aTexPos;\n"
         "out vec4 vertexColor;\n"
         "out vec2 texPos;\n"
+        "uniform vec4 camProps;\n" // xy is camPos and zw is camSize
         "void main()\n"
         "{ vertexColor = aColor; texPos = aTexPos;\n"
-        "gl_Position = vec4(aPos.xy, 0.0, 1.0);}\n\0";
+        "vec2 xy = (aPos - camProps.xy)/(camProps.zw/2);\n"
+        "gl_Position = vec4(xy, 0.0, 1.0);}\n\0";
 
     const char* baseFragmentShaderSrc =
         "#version 330 core\n"
@@ -97,8 +99,8 @@ int ImageBuilder::addVert(int x, int y, float s, float t){
 }
 
 int ImageBuilder::addVert(int x, int y, Color& color, float s, float t){
-    m_Verts[m_NextVertPos++] = (2.0f * x/m_Width) -1;
-    m_Verts[m_NextVertPos++] = (2.0f * y/m_Height) -1;
+    m_Verts[m_NextVertPos++] = (1.0f * x);
+    m_Verts[m_NextVertPos++] = (1.0f * y);
     m_Verts[m_NextVertPos++] = color.r/255.0;
     m_Verts[m_NextVertPos++] = color.g/255.0;
     m_Verts[m_NextVertPos++] = color.b/255.0;
@@ -349,8 +351,8 @@ void ImageBuilder::submit(){
     glGenBuffers(1, &m_VBO);
     glGenBuffers(1, &m_EBO);
     
-    std::cout << "Src got " << getVertCount() << " Vertices and " << getElemCount() << " Elems" << std::endl;
-    std::cout << "Src dims " << getWidth() << " x " << getHeight() << " px" << std::endl;
+    //std::cout << "Src got " << getVertCount() << " Vertices and " << getElemCount() << " Elems" << std::endl;
+    //std::cout << "Src dims " << getWidth() << " x " << getHeight() << " px" << std::endl;
 
     glBindVertexArray(m_VAO);
     glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
@@ -386,15 +388,22 @@ void ImageBuilder::submit(){
     glBindVertexArray(m_VAO); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
 
     int nBlock = getElemBlockCount();
-    std::cout << "There are " << nBlock << " elem blocks" << std::endl;
+    //std::cout << "There are " << nBlock << " elem blocks" << std::endl;
+
+    Point2D camPos = m_Camera->getPos();
+    float camZoom = m_Camera->getZoom();
+    std::cout << "Camera has pos " << camPos.x << "," << camPos.y <<  " and zoom factor " << camZoom << std::endl;
+    
     for(int i = 0; i < nBlock; i++){
         ElementBlock block = m_ElemBlocks[i];
         
-        std::cout << "Drawing block of mode " << block.mode << " from " << block.start << " of " << block.cnt << " elements, size " << block.size << " and texture " << block.texture << std::endl;
+        //std::cout << "Drawing block of mode " << block.mode << " from " << block.start << " of " << block.cnt << " elements, size " << block.size << " and texture " << block.texture << std::endl;
 
         if(block.shdrProg != currProgram){
             glUseProgram(block.shdrProg);
             currProgram = block.shdrProg;
+            int loc = glGetUniformLocation(currProgram, "camProps");
+            glUniform4f(loc, camPos.x, camPos.y, camZoom*m_Width, camZoom*m_Height);
         }
 
         if(block.texture == nullptr){

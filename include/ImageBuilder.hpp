@@ -22,6 +22,7 @@
 #include "Texture.hpp"
 #include "FontManager.hpp"
 #include "Shaders.hpp"
+#include "Camera.hpp"
 
 // Maybe forward declaration of class is bad, read about it
 class Window;
@@ -77,6 +78,8 @@ namespace Vizior {
         ElementBlock* getElemBlocks(){return m_ElemBlocks;}
         int getElemBlockCount(){return m_NextElemBlockPos;}
 
+        void setCamera(Camera* camSrc){m_Camera = camSrc;}
+        Camera* getLatestCamera(){return m_Camera;}
         int getWidth(){return m_Width;}
         int getHeight(){return m_Height;}
     protected:
@@ -87,7 +90,6 @@ namespace Vizior {
         int addVert(int x, int y, Color& color, float s, float t);
         void addElementBlock(GLenum mode, int vertexCount, unsigned int size, unsigned int shdrProg, Texture* tex);
         // TODO Make it so people that know how to write shader can modify the shaders used
-        // TODO Should probably put shaders somewhere else than directly in window too
         void compileBaseShaders();
 
         // OpenGL related values
@@ -95,6 +97,8 @@ namespace Vizior {
 
         // Drawing space dimensions
         int m_Width, m_Height;
+
+        Camera* m_Camera;
 
         // For text rendering
         FontManager* m_FontManager;

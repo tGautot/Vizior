@@ -15,6 +15,6 @@ SET( GCC_COVERAGE_COMPILE_FLAGS "-Wwrite-strings" )
 add_subdirectory( external/glfw )
 add_subdirectory( external/freetype )
    
-add_executable( Vizior WIN32 src/main.cpp src/glad.c src/Point2D.cpp src/ImageBuilder.cpp src/Window.cpp src/stbImageLoader.cpp src/Texture.cpp src/FontManager.cpp src/Shaders.cpp src/Vizior.cpp )
+add_executable( Vizior WIN32 src/main.cpp src/glad.c src/Point2D.cpp src/ImageBuilder.cpp src/Window.cpp src/stbImageLoader.cpp src/Texture.cpp src/FontManager.cpp src/Shaders.cpp src/Camera.cpp src/Vizior.cpp )
 target_link_libraries( Vizior ${OPENGL_LIBRARIES} glfw freetype )
 target_include_directories( Vizior PUBLIC ./include PUBLIC external/glfw/include PUBLIC external/FreeType/include PUBLIC external )

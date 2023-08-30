@@ -20,6 +20,8 @@
 #include <memory>
 #include <iostream>
 
+#include "Camera.hpp"
+
 namespace Vizior {
 
     class Window 
@@ -34,16 +36,18 @@ namespace Vizior {
         std::shared_ptr<ImageBuilder> getSource(){return m_Src;}
         int getWidth(){return this->m_Width;}
         int getHeight(){return this->m_Height;}
+        void keyCallback(int key, int scancode, int action, int mods);
 
         bool shouldClose();
         //std::shared_ptr<Window> getSharedPtr(){return shared_from_this();}
 
     private:
         
-        
         std::shared_ptr<ImageBuilder> m_Src = nullptr;
 
-        
+        Camera* m_Camera;
+
+
         unsigned int m_WinId;
         const char* m_WinName;  
         int m_Width, m_Height;

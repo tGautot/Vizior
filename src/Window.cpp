@@ -1,7 +1,13 @@
 #include "Window.hpp"
 
 namespace Vizior {
-    
+
+void glfw_key_callback(GLFWwindow* window, int key, int scancode, int action, int mods){
+    std::cout << "GLFW KEY CALLBACK GOT KEY " << key << std::endl;
+    Window* viziorWin = (Window*) (glfwGetWindowUserPointer(window));
+    viziorWin->keyCallback(key, scancode, action, mods);
+}
+
 Window::Window(int w, int h, const char* name)
     : m_WinName(name), m_Width(w), m_Height(h) {
     /* Initialize the library */
@@ -34,6 +40,10 @@ Window::Window(int w, int h, const char* name)
     } 
 
     glViewport(0,0,m_Width,m_Height);
+
+    m_Camera = new LinearCamera({m_Width/2, m_Height/2});
+    glfwSetWindowUserPointer(m_glfw_Window, this);
+    glfwSetKeyCallback(m_glfw_Window, glfw_key_callback);
 }
 
 Window::~Window(){
@@ -50,6 +60,7 @@ void Window::drawSource(){
     }
     std::cout << "Trying to draw on window " << m_WinName << std::endl;
         
+    m_Src->setCamera(m_Camera);
     m_Src->submit();
 
     /* Swap front and back buffers */
@@ -66,6 +77,23 @@ bool Window::shouldClose(){
 void Window::setSource(std::shared_ptr<ImageBuilder> src){ 
     m_Src = src;
     src->setDimensions(m_Width, m_Height); 
+}
+
+void Window::keyCallback(int key, int scancode, int action, int mods)
+{
+    std::cout << "WINDOW KEY CALLBACK GOT KEY " << key << std::endl;
+    Point2D camDir{0,0};
+    if (key == GLFW_KEY_W && action != GLFW_RELEASE)
+        camDir.y+=1;
+    if (key == GLFW_KEY_S && action != GLFW_RELEASE)
+        camDir.y-=1;
+    if (key == GLFW_KEY_A && action != GLFW_RELEASE)
+        camDir.x-=1;
+    if (key == GLFW_KEY_D && action != GLFW_RELEASE)
+        camDir.x+=1;
+
+    m_Camera->movePos(camDir);
+    
 }
 
 }
