@@ -252,6 +252,22 @@ void ImageBuilder::drawLine(Point2D* ps, int w, Color& color){
     addElementBlock(GL_LINE_STRIP, 2, w, m_BaseShdr->getId(), nullptr);
 }
 
+void ImageBuilder::drawLine(Point2D* ps, int n, int w, Color& color, bool loop){
+    if(n <= 2) {drawLine(ps, w, color);}
+    if(w > m_LineWidthRange[1]){
+        // Requested line width is too high for GPU
+        // Since its a strip, cant really do rectangle
+        std::cout << "ERROR::DRAW_LINE(n>2)::Width too big, max is " << m_LineWidthRange[1] << std::endl; 
+        return;
+    }
+    // Pure OpenGL line
+    for(int i = 0; i < n; i++){
+        m_VertIdx[m_NextElemPos++] = addVert(ps[i].x, ps[i].y, color);
+    }
+    addElementBlock(loop ? GL_LINE_LOOP : GL_LINE_STRIP, n, w, m_BaseShdr->getId(), nullptr);
+}
+
+
 void ImageBuilder::drawPoint(Point2D& pt, unsigned int sz, Color& color){
     m_VertIdx[m_NextElemPos++] = addVert(pt.x, pt.y, color);
     addElementBlock(GL_POINTS, 1, sz, m_BaseShdr->getId(), nullptr);

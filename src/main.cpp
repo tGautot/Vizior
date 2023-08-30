@@ -44,6 +44,16 @@ void loop(int frameCount){
         {center, botl}
     };
 
+    Vizior::Color prl = {127,0,255,255};
+    Vizior::Point2D spiral[4*5];
+    for (int i = 0; i < 5; i++){
+        spiral[i*4+0]= {10+i*40,10+i*30};
+        spiral[i*4+1]= {800-(10+i*40),10+i*30};
+        spiral[i*4+2]= {800-(10+i*40),600-(10+i*30)};
+        spiral[i*4+3]= {10+i*40,600-(10+i*30)};
+    }
+
+
     if(frameCount > 1){
         src1->drawTriangle(t1, Vizior::RED);
         src1->drawTriangle(t2, Vizior::BLU);
@@ -55,6 +65,7 @@ void loop(int frameCount){
         src1->drawCircle(center,55, PNK);
         src1->drawPoint(pt, 100, PNK);
         src1->drawText(Vizior::ANCHOR_BL,other,"The quick brown fox", Vizior::WHT, fontName, 1, 0);
+        src1->drawLine(spiral, 20, 5, prl, true);
         //src2->drawTriangle(t1, Vizior::BLU);
     }
     /*Vizior::drawCircle(Vizior::ANCHOR_C, &center, 100, &Vizior::BLU);

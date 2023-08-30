@@ -65,6 +65,7 @@ namespace Vizior {
         void drawRectangle(ANCHOR, Point2D& anch, int w, int h, float rot, Color&);
         void drawCircle(Point2D& anch, int r, Color&);
         void drawLine(Point2D*, int w, Color&);
+        void drawLine(Point2D*, int n, int w, Color&, bool loop);
         void drawPoint(Point2D& point, unsigned int sz, Color&);
         void drawImage(ANCHOR, Point2D& anch, Texture* image, int w, int h, int rot);
         void drawText(ANCHOR, Point2D& anch, std::string text, Color& col, const char* fontName, float scale, int rot);
