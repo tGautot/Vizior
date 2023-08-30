@@ -73,6 +73,8 @@ void Window::drawSource(){
 
     /* Updates states for getkey */
     glfwPollEvents();
+
+    // TODO Call this elsewhere
     updateCamPos();
 }
 

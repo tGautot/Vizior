@@ -30,6 +30,7 @@ ImageBuilder::ImageBuilder(){
     // Will be set for real once bound to a window, polly not needed
     m_Width = 100;
     m_Height = 100;
+    m_BgColor = {255,255,255,255};
     compileBaseShaders();
     m_BaseShdr->use();
 }
@@ -379,7 +380,7 @@ void ImageBuilder::submit(){
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, m_nVertexVals*sizeof(float), (void*)(6*sizeof(float)));
     glEnableVertexAttribArray(2);
     
-    glClearColor( 1.0f, 1.0f, 1.0f, 0.0f );
+    glClearColor( m_BgColor.r/255.0f, m_BgColor.g/255.0f, m_BgColor.b/255.0f, 0.0f );
     glClear(GL_COLOR_BUFFER_BIT);
 
     unsigned int currProgram = m_BaseShdr->getId();

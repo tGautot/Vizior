@@ -71,6 +71,7 @@ namespace Vizior {
         void drawImage(ANCHOR, Point2D& anch, Texture* image, int w, int h, int rot);
         void drawText(ANCHOR, Point2D& anch, std::string text, Color& col, const char* fontName, float scale, int rot);
 
+        Color getBackgroundColor(){return m_BgColor;}
         float* getVerts(){return m_Verts;}
         int getVertCount(){return m_NextVertPos;}
         unsigned int* getEBO(){return m_VertIdx;}
@@ -79,6 +80,8 @@ namespace Vizior {
         int getElemBlockCount(){return m_NextElemBlockPos;}
 
         void setCamera(Camera* camSrc){m_Camera = camSrc;}
+        void setBackgroundColor(Color col){m_BgColor = col;}
+        
         Camera* getLatestCamera(){return m_Camera;}
         int getWidth(){return m_Width;}
         int getHeight(){return m_Height;}
@@ -99,6 +102,7 @@ namespace Vizior {
         int m_Width, m_Height;
 
         Camera* m_Camera;
+        Color m_BgColor;
 
         // For text rendering
         FontManager* m_FontManager;
