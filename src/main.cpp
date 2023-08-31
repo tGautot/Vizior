@@ -44,6 +44,15 @@ void loop(int frameCount){
         {center, botl}
     };
 
+    Vizior::Color CYN {0,100,100,255};
+    Vizior::Point2D poly[5] = {
+        {50,50},
+        {100,0},
+        {50,-50},
+        {-50,-50},
+        {-50,50}
+    };
+
     Vizior::Color prl = {127,0,255,255};
     Vizior::Point2D spiral[4*5];
     for (int i = 0; i < 5; i++){
@@ -54,36 +63,22 @@ void loop(int frameCount){
     }
 
 
-    if(frameCount > 1){
-        src1->drawTriangle(t1, Vizior::RED);
-        src1->drawTriangle(t2, Vizior::BLU);
-        src1->drawImage(Vizior::ANCHOR_TL, center, containerImage, 200,200,0);
-        for(int i = 0; i < 4; i++){
-            src1->drawLine(l[i],(i+1)*4,Vizior::GRN);
-        }
-        Vizior::Color PNK{255,9*16+9,14*16+14,255};
-        src1->drawCircle(center,55, PNK);
-        src1->drawPoint(pt, 100, PNK);
-        src1->drawText(Vizior::ANCHOR_BL,other,"The quick brown fox", Vizior::WHT, fontName, 1, 0);
-        src1->drawLine(spiral, 20, 5, prl, true);
-        //src2->drawTriangle(t1, Vizior::BLU);
+    src1->drawTriangle(t1, Vizior::RED);
+    src1->drawTriangle(t2, Vizior::BLU);
+    src1->drawImage(Vizior::ANCHOR_TL, center, containerImage, 200,200,0);
+    for(int i = 0; i < 4; i++){
+        src1->drawLine(l[i],(i+1)*4,Vizior::GRN);
     }
-    /*Vizior::drawCircle(Vizior::ANCHOR_C, &center, 100, &Vizior::BLU);
-    Vizior::drawRectangle(Vizior::ANCHOR_C, &center, 700, 20, 45, &Vizior::GRN);
+    Vizior::Color PNK{255,9*16+9,14*16+14,255};
+    src1->drawCircle(center,10, PNK);
+    src1->drawPoint(pt, 100, PNK);
+    src1->drawText(Vizior::ANCHOR_BL,other,"The quick brown fox", Vizior::WHT, fontName, 1, 0);
+    src1->drawLine(spiral, 20, 5, prl, false);
+    src1->drawPolygon(poly, 5, CYN);
+    src1->drawArc(center, 100,33,133,Vizior::ORG);
+    src1->drawRing(center, 135,155, Vizior::CYN);
+    //src2->drawTriangle(t1, Vizior::BLU);
     
-    Vizior::Point2D l1[2]{
-        {600, 200}, {650,530}
-    };
-
-    Vizior::drawLine(l1, 2, &Vizior::BLK);
-
-    Vizior::Point2D l2[2]{
-        {0,0},{(frameCount/2)%800,(frameCount/2)%600}
-    };
-    Vizior::drawLine(l2, 10, &PNK);
-
-
-    Vizior::drawAll();*/
 }
 
 int main(void)
@@ -98,7 +93,7 @@ int main(void)
     fontManager->registerFont(fontPath, fontName);
     std::cout << "Registered font " << fontName << std::endl;
     Vizior::Color BRN{102,51,0,255};
-    src1->setBackgroundColor(BRN);
+    //src1->setBackgroundColor(BRN);
     
     //win2 = std::make_shared<Vizior::Window>(800,600,winName2);
     //win2->setSource(src1);

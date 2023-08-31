@@ -7,6 +7,12 @@ Color GRN = {0,255,0,255};
 Color BLU = {0,0,255,255};
 Color WHT = {255,255,255,255};
 Color BLK = {0,0,0,1};
+Color CYN = {0,255,255,255};
+Color YLW = {255,255,0,255};
+Color PRPL = {255,0,255,255};
+Color BRN = {100,50,0,255};
+Color ORG = {255,128,0,255};
+Color GREY = {128,128,128,255};
 
 ImageBuilder::ImageBuilder(){
     // At most 10000 vertices
@@ -138,8 +144,7 @@ void ImageBuilder::clearAll(){
 
 void ImageBuilder::drawTriangle(Point2D* ps, Color& color){
     for(int i = 0; i < 3; i++){
-        m_VertIdx[m_NextElemPos] = addVert(ps[i].x, ps[i].y, color);
-        m_NextElemPos++;
+        m_VertIdx[m_NextElemPos++] = addVert(ps[i].x, ps[i].y, color);
     }
     addElementBlock(GL_TRIANGLES, 3, 0.0f, m_BaseShdr->getId(), nullptr);
 }
@@ -188,7 +193,7 @@ Point2D* getCornersOfRect(ANCHOR a, Point2D& anch, int w, int h, int rot){
     return corners;
 }
 
-void ImageBuilder::drawRectangle(ANCHOR a, Point2D& anch, int w, int h, float rot, Color& color){
+void ImageBuilder::drawRect(ANCHOR a, Point2D& anch, int w, int h, float rot, Color& color){
     Point2D* corners = getCornersOfRect(a, anch, w, h, rot);
     Point2D bl = corners[0], tl = corners[1], br = corners[2], tr = corners[3];
 
@@ -208,6 +213,17 @@ void ImageBuilder::drawRectangle(ANCHOR a, Point2D& anch, int w, int h, float ro
 
 
     addElementBlock(GL_TRIANGLE_STRIP, 6, 0.0f, m_BaseShdr->getId(), nullptr);
+}
+
+void ImageBuilder::drawQuad(Point2D* pts, Color& col){
+    drawPolygon(pts, 4, col);
+}
+
+void ImageBuilder::drawPolygon(Point2D* pts, int n, Color& col){
+    for(int i = 0; i < n; i++){
+        m_VertIdx[m_NextElemPos++] = addVert(pts[i].x, pts[i].y, col);
+    }
+    addElementBlock(GL_TRIANGLE_FAN, n, 0.0f, m_BaseShdr->getId(), nullptr);
 }
 
 // TODO better ways to draw cricle probably
@@ -238,6 +254,76 @@ void ImageBuilder::drawCircle(Point2D& center, int r, Color& color){
 
 }
 
+void ImageBuilder::drawArc(Point2D& center, int r, int from, int to, Color& col){
+    if(to < from){
+        int tmp = from; from = to; to = tmp;
+    }
+    
+    // Center point
+    int startElemId = addVert(center.x, center.y, col);
+
+    int tris = to-from;
+    // Circle points
+    int last = -1, beforeLast = -1;
+    for(int i = from; i <= to; i++){
+        int px = center.x + cos(M_PI * i*2/360) * r;
+        int py = center.y + sin(M_PI * i*2/360) * r;
+        beforeLast = last;
+        last = addVert(px, py, col);
+        if(i >= from+1){
+            m_VertIdx[m_NextElemPos++] = startElemId;
+            m_VertIdx[m_NextElemPos++] = beforeLast;
+            m_VertIdx[m_NextElemPos++] = last;
+        } 
+    }
+    addElementBlock(GL_TRIANGLES, tris*3, 0.0f, m_BaseShdr->getId(), nullptr);
+
+}
+
+void ImageBuilder::drawRing(Point2D& center, int inR, int outR, Color& color){
+    // Center point
+    //int startElemId = addVert(center.x, center.y, color);
+
+    int precision = 180;
+    int outEID[precision], inEID[precision];
+
+    // Ring points
+    int inpx, inpy, outpx, outpy;
+    // expensive computation
+    double cosVal, sinVal;
+    for(int i = 0; i < precision; i++){
+        cosVal = cos(M_PI * i*2 / precision);
+        sinVal = sin(M_PI * i*2 / precision);
+
+        inpx = center.x + cosVal * inR;
+        inpy = center.y + sinVal * inR;
+        outpx = center.x + cosVal * outR;
+        outpy = center.y + sinVal * outR;
+
+        inEID[i] = addVert(inpx, inpy, color);
+        outEID[i] = addVert(outpx, outpy, color);
+
+        if(i >= 1){
+            m_VertIdx[m_NextElemPos++] = inEID[i-1];
+            m_VertIdx[m_NextElemPos++] = outEID[i-1];
+            m_VertIdx[m_NextElemPos++] = outEID[i];
+            m_VertIdx[m_NextElemPos++] = inEID[i-1];
+            m_VertIdx[m_NextElemPos++] = inEID[i];
+            m_VertIdx[m_NextElemPos++] = outEID[i];
+        } 
+
+    }
+    
+    m_VertIdx[m_NextElemPos++] = inEID[precision-1];
+    m_VertIdx[m_NextElemPos++] = outEID[precision-1];
+    m_VertIdx[m_NextElemPos++] = outEID[0];
+    m_VertIdx[m_NextElemPos++] = inEID[precision-1];
+    m_VertIdx[m_NextElemPos++] = inEID[0];
+    m_VertIdx[m_NextElemPos++] = outEID[0];
+    addElementBlock(GL_TRIANGLES, precision*6, 0.0f, m_BaseShdr->getId(), nullptr);
+
+}
+
 void ImageBuilder::drawLine(Point2D* ps, int w, Color& color){
     if(w > m_LineWidthRange[1]){
         // Requested line width is too high for GPU, simulate it with rectangle
@@ -246,7 +332,7 @@ void ImageBuilder::drawLine(Point2D* ps, int w, Color& color){
         float angle = 180 * atan2(orientation.y, orientation.x) / M_PI;
         
         int length = sqrt(orientation.x*orientation.x + orientation.y*orientation.y);
-        drawRectangle(ANCHOR_C, center, length, w, angle, color);
+        drawRect(ANCHOR_C, center, length, w, angle, color);
         return;
     }
     // Pure OpenGL line
@@ -256,7 +342,7 @@ void ImageBuilder::drawLine(Point2D* ps, int w, Color& color){
 }
 
 void ImageBuilder::drawLine(Point2D* ps, int n, int w, Color& color, bool loop){
-    if(n <= 2) {drawLine(ps, w, color);}
+    if(n <= 2) {drawLine(ps, w, color); return;}
     if(w > m_LineWidthRange[1]){
         // Requested line width is too high for GPU
         // Since its a strip, cant really do rectangle
@@ -395,16 +481,21 @@ void ImageBuilder::submit(){
     float camZoom = m_Camera->getZoom();
     std::cout << "Camera has pos " << camPos.x << "," << camPos.y <<  " and zoom factor " << camZoom << std::endl;
     
+    int camPropsLoc = glGetUniformLocation(currProgram, "camProps");
+    glUniform4f(camPropsLoc, camPos.x, camPos.y, m_Width/camZoom, m_Height/camZoom);
+
+    //glDisable(GL_BLEND);
     for(int i = 0; i < nBlock; i++){
         ElementBlock block = m_ElemBlocks[i];
         
-        //std::cout << "Drawing block of mode " << block.mode << " from " << block.start << " of " << block.cnt << " elements, size " << block.size << " and texture " << block.texture << std::endl;
+        std::cout << "Drawing block of mode " << block.mode << " from " << block.start << " of " << block.cnt << " elements, size " << block.size << " and texture " << block.texture << std::endl;
 
         if(block.shdrProg != currProgram){
             glUseProgram(block.shdrProg);
             currProgram = block.shdrProg;
-            int loc = glGetUniformLocation(currProgram, "camProps");
-            glUniform4f(loc, camPos.x, camPos.y, m_Width/camZoom, m_Height/camZoom);
+            // Is this line necessary every time?
+            camPropsLoc = glGetUniformLocation(currProgram, "camProps");
+            glUniform4f(camPropsLoc, camPos.x, camPos.y, m_Width/camZoom, m_Height/camZoom);
         }
 
         if(block.texture == nullptr){
@@ -419,6 +510,7 @@ void ImageBuilder::submit(){
         } else if(block.mode == GL_POINTS){
             glPointSize(block.size*camZoom);
         }
+        //glPointSize(10);
         glDrawElements(block.mode, block.cnt, GL_UNSIGNED_INT, (void*)(block.start*sizeof(unsigned int)));        
     }
     

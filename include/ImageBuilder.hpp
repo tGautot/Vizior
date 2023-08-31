@@ -51,6 +51,12 @@ namespace Vizior {
     extern Color BLU;
     extern Color WHT;
     extern Color BLK;
+    extern Color CYN;
+    extern Color YLW;
+    extern Color BRN;
+    extern Color PRPL;
+    extern Color ORG;
+    extern Color GREY;
 
     class ImageBuilder {
     friend class Window;
@@ -63,8 +69,14 @@ namespace Vizior {
         void clearAll();
 
         void drawTriangle(Point2D*, Color&);
-        void drawRectangle(ANCHOR, Point2D& anch, int w, int h, float rot, Color&);
-        void drawCircle(Point2D& anch, int r, Color&);
+        void drawRect(ANCHOR, Point2D& anch, int w, int h, float rot, Color&);
+        void drawQuad(Point2D* pts, Color&);
+        // Draws the convex hull defined by the n points
+        // TODO make it actual polygon, not convex hull
+        void drawPolygon(Point2D* pts, int n, Color&);
+        void drawCircle(Point2D& center, int r, Color&);
+        void drawRing(Point2D& center, int inR, int outR, Color&);
+        void drawArc(Point2D& center, int r, int from, int to, Color&);
         void drawLine(Point2D*, int w, Color&);
         void drawLine(Point2D*, int n, int w, Color&, bool loop);
         void drawPoint(Point2D& point, unsigned int sz, Color&);
