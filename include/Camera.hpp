@@ -11,6 +11,7 @@ public:
     Camera(Point2D startPos){
         m_Pos = {startPos.x, startPos.y};
         m_Zoom = 1.0f;
+        m_RotZ = 0;
     }
 
 

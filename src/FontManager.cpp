@@ -30,7 +30,6 @@ int FontManager::registerFont(const char* fontPath, const char* fontName){
     for (unsigned char c = 0; c < 128; c++){
         // load character glyph 
 
-        std::cout << "Loading char " << (int)(c) << "/" << 128 << std::endl;
         if (FT_Load_Char(face, c, FT_LOAD_RENDER))
         {
             std::cout << "ERROR::FREETYTPE: Failed to load Glyph" << std::endl;
@@ -50,7 +49,6 @@ int FontManager::registerFont(const char* fontPath, const char* fontName){
             c, fontName
         };
         
-        std::cout << "Inserting into map" << std::endl;
         glyphMap.insert(std::pair<GlyphDescriptor, Glyph>(gd, glyph));
     }
 

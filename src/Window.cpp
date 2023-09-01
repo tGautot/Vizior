@@ -90,6 +90,7 @@ void Window::setSource(std::shared_ptr<ImageBuilder> src){
 void Window::updateCamPos()
 {
     Point2D camDir{0,0};
+
     if (glfwGetKey(m_glfw_Window, GLFW_KEY_W) != GLFW_RELEASE)
         camDir.y+=1;
     if (glfwGetKey(m_glfw_Window, GLFW_KEY_S) != GLFW_RELEASE)
@@ -99,8 +100,15 @@ void Window::updateCamPos()
     if (glfwGetKey(m_glfw_Window, GLFW_KEY_D) != GLFW_RELEASE)
         camDir.x+=1;
 
+    float camRot = 0;
+
+    if(glfwGetKey(m_glfw_Window, GLFW_KEY_Q) == GLFW_PRESS)
+        camRot+=M_PI/180;
+    if(glfwGetKey(m_glfw_Window, GLFW_KEY_E) == GLFW_PRESS)
+        camRot-=M_PI/180;
+
     m_Camera->movePos(camDir);
-    
+    m_Camera->setRotZ(m_Camera->getRotZ()+camRot);
 }
 
 void Window::scrollCallback(double x, double y)

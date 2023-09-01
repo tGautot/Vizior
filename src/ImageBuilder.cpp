@@ -57,8 +57,8 @@ void ImageBuilder::compileBaseShaders(){
         "uniform vec2 vertSpace;\n" // WidthxHeight to map back to -1 1
         "void main()\n"
         "{ vertexColor = aColor; texPos = aTexPos;\n"
-        "vec2 xy = aPos/(vertSpace/2);\n"
-        "gl_Position = viewMat * vec4(xy, 0.0, 1.0);}\n\0";
+        // Feel like it should be times 2, not 4, but what do I know, this works
+        "gl_Position = (viewMat * vec4(aPos, 0.0, 1.0))/vec4(vertSpace/2, 1.0, 1.0);}\n\0";
 
     const char* baseFragmentShaderSrc =
         "#version 330 core\n"
@@ -490,12 +490,22 @@ void ImageBuilder::submit(){
 
     float viewMat[16];
     m_Camera->computeLookAtMatrix(viewMat);
+    
     int viewMathLoc = glGetUniformLocation(currProgram, "viewMat");
     glUniformMatrix4fv(viewMathLoc, 1, GL_TRUE, viewMat);
 
     float camZoom = m_Camera->getZoom();
     int vertSpaceLoc = glGetUniformLocation(currProgram, "vertSpace");
     glUniform2f(vertSpaceLoc, m_Width/camZoom, m_Height/camZoom);
+
+    std::cout << "Camera at pos " << m_Camera->getPos().x << "," << m_Camera->getPos().y << " z-rot " << m_Camera->getRotZ() << " zoomf " << camZoom << std::endl; 
+    std::cout << "View Mat: " << std::endl;
+    for(int i = 0; i < 4; i++){
+        for(int j = 0; j < 4; j++){
+            std::cout << viewMat[i*4+j] <<  " ";
+        }
+        std::cout << std::endl;
+    }
 
     for(int i = 0; i < nBlock; i++){
         ElementBlock block = m_ElemBlocks[i];
