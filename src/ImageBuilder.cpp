@@ -53,11 +53,12 @@ void ImageBuilder::compileBaseShaders(){
         "layout (location = 2) in vec2 aTexPos;\n"
         "out vec4 vertexColor;\n"
         "out vec2 texPos;\n"
-        "uniform vec4 camProps;\n" // xy is camPos and zw is camSize
+        "uniform mat4 viewMat;\n" 
+        "uniform vec2 vertSpace;\n" // WidthxHeight to map back to -1 1
         "void main()\n"
         "{ vertexColor = aColor; texPos = aTexPos;\n"
-        "vec2 xy = (aPos - camProps.xy)/(camProps.zw/2);\n"
-        "gl_Position = vec4(xy, 0.0, 1.0);}\n\0";
+        "vec2 xy = aPos/(vertSpace/2);\n"
+        "gl_Position = viewMat * vec4(xy, 0.0, 1.0);}\n\0";
 
     const char* baseFragmentShaderSrc =
         "#version 330 core\n"
@@ -294,46 +295,6 @@ void ImageBuilder::drawArc(Point2D& center, int r, int from, int to, Color& col)
 }
 
 void ImageBuilder::drawRing(Point2D& center, int inR, int outR, Color& color){
-    /*
-    int precision = 180;
-    int outEID[precision], inEID[precision];
-
-    // Ring points
-    int inpx, inpy, outpx, outpy;
-    // expensive computation
-    double cosVal, sinVal;
-    for(int i = 0; i < precision; i++){
-        cosVal = cos(M_PI * i*2 / precision);
-        sinVal = sin(M_PI * i*2 / precision);
-
-        inpx = center.x + cosVal * inR;
-        inpy = center.y + sinVal * inR;
-        outpx = center.x + cosVal * outR;
-        outpy = center.y + sinVal * outR;
-
-        inEID[i] = addVert(inpx, inpy, color);
-        outEID[i] = addVert(outpx, outpy, color);
-
-        if(i >= 1){
-            m_VertIdx[m_NextElemPos++] = inEID[i-1];
-            m_VertIdx[m_NextElemPos++] = outEID[i-1];
-            m_VertIdx[m_NextElemPos++] = outEID[i];
-            m_VertIdx[m_NextElemPos++] = inEID[i-1];
-            m_VertIdx[m_NextElemPos++] = inEID[i];
-            m_VertIdx[m_NextElemPos++] = outEID[i];
-        } 
-
-    }
-    
-    m_VertIdx[m_NextElemPos++] = inEID[precision-1];
-    m_VertIdx[m_NextElemPos++] = outEID[precision-1];
-    m_VertIdx[m_NextElemPos++] = outEID[0];
-    m_VertIdx[m_NextElemPos++] = inEID[precision-1];
-    m_VertIdx[m_NextElemPos++] = inEID[0];
-    m_VertIdx[m_NextElemPos++] = outEID[0];
-    addElementBlock(GL_TRIANGLES, precision*6, 0.0f, m_BaseShdr->getId(), nullptr);
-    */
-
     drawRingArc(center, inR, outR, 0,360, color);
 }
 
@@ -527,25 +488,30 @@ void ImageBuilder::submit(){
     int nBlock = getElemBlockCount();
     //std::cout << "There are " << nBlock << " elem blocks" << std::endl;
 
-    Point2D camPos = m_Camera->getPos();
-    float camZoom = m_Camera->getZoom();
-    std::cout << "Camera has pos " << camPos.x << "," << camPos.y <<  " and zoom factor " << camZoom << std::endl;
-    
-    int camPropsLoc = glGetUniformLocation(currProgram, "camProps");
-    glUniform4f(camPropsLoc, camPos.x, camPos.y, m_Width/camZoom, m_Height/camZoom);
+    float viewMat[16];
+    m_Camera->computeLookAtMatrix(viewMat);
+    int viewMathLoc = glGetUniformLocation(currProgram, "viewMat");
+    glUniformMatrix4fv(viewMathLoc, 1, GL_TRUE, viewMat);
 
-    //glDisable(GL_BLEND);
+    float camZoom = m_Camera->getZoom();
+    int vertSpaceLoc = glGetUniformLocation(currProgram, "vertSpace");
+    glUniform2f(vertSpaceLoc, m_Width/camZoom, m_Height/camZoom);
+
     for(int i = 0; i < nBlock; i++){
         ElementBlock block = m_ElemBlocks[i];
         
-        std::cout << "Drawing block of mode " << block.mode << " from " << block.start << " of " << block.cnt << " elements, size " << block.size << " and texture " << block.texture << std::endl;
+        //std::cout << "Drawing block of mode " << block.mode << " from " << block.start << " of " << block.cnt << " elements, size " << block.size << " and texture " << block.texture << std::endl;
 
         if(block.shdrProg != currProgram){
             glUseProgram(block.shdrProg);
             currProgram = block.shdrProg;
             // Is this line necessary every time?
-            camPropsLoc = glGetUniformLocation(currProgram, "camProps");
-            glUniform4f(camPropsLoc, camPos.x, camPos.y, m_Width/camZoom, m_Height/camZoom);
+            viewMathLoc = glGetUniformLocation(currProgram, "viewMat");
+            vertSpaceLoc = glGetUniformLocation(currProgram, "vertSpace");
+            
+            glUniformMatrix4fv(viewMathLoc, 1, GL_TRUE, viewMat);
+            glUniform2f(vertSpaceLoc, m_Width/camZoom, m_Height/camZoom);
+
         }
 
         if(block.texture == nullptr){

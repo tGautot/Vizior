@@ -18,13 +18,17 @@ public:
     // Magnitude of the point has no effect
     virtual void movePos(Point2D dir) = 0;
 
+    void computeLookAtMatrix(float* dest);
+
     void setPos(Point2D pos){m_Pos = pos;}
     Point2D getPos(){return m_Pos;}
     void setZoom(float z);
     float getZoom(){return m_Zoom;}
+    void setRotZ(float z){m_RotZ = z;};
+    float getRotZ(){return m_RotZ;}
 protected:
     Point2D m_Pos;
-    float m_Zoom;
+    float m_Zoom, m_RotZ;
 
 };
 
