@@ -13,13 +13,17 @@ Color PRPL = {255,0,255,255};
 Color BRN = {100,50,0,255};
 Color ORG = {255,128,0,255};
 Color GREY = {128,128,128,255};
+Color DRK_RED = {100,0,0,255};
+Color DRK_BLU = {0,100,0,255};
+Color DRK_GRN = {0,0,100,255};
+Color SKY_BLU = {100,170,255,255};
 
 ImageBuilder::ImageBuilder(){
     // At most 10000 vertices
     // TODO change this or handle it better
-    m_Verts = new float[m_nVertexVals*10000];
-    m_VertIdx = new unsigned int[3*10000];
-    m_ElemBlocks = new ElementBlock[1*10000];
+    m_Verts = new float[m_nVertexVals*20000];
+    m_VertIdx = new unsigned int[3*20000];
+    m_ElemBlocks = new ElementBlock[1*20000];
     m_NextElemPos = 0;
     m_NextVertPos = 0;
     m_NextElemBlockPos = 0;
@@ -228,17 +232,25 @@ void ImageBuilder::drawPolygon(Point2D* pts, int n, Color& col){
 
 // TODO better ways to draw cricle probably
 void ImageBuilder::drawCircle(Point2D& center, int r, Color& color){
+    drawEllipse(center, r, r, 0, color);
+}
+
+void ImageBuilder::drawEllipse(Point2D& center, int rx, int ry, int rot, Color& color){
     // Center point
     int startElemId = addVert(center.x, center.y, color);
 
     int precision = 180;
     // Circle points
     int last = -1, beforeLast = -1, first=-1;
+    int px, py;
+    Point2D edgePt;
     for(int i = 0; i < precision; i++){
-        int px = center.x + cos(M_PI * i*2 / precision) * r;
-        int py = center.y + sin(M_PI * i*2 / precision) * r;
+        int px = center.x + cos(M_PI * i*2 / precision) * rx;
+        int py = center.y + sin(M_PI * i*2 / precision) * ry;
+        edgePt = {px, py};
+        edgePt = edgePt.rotateAroundBy(center, rot);
         beforeLast = last;
-        last = addVert(px, py, color);
+        last = addVert(edgePt.x, edgePt.y, color);
         if(i >= 1){
             m_VertIdx[m_NextElemPos++] = startElemId;
             m_VertIdx[m_NextElemPos++] = beforeLast;
@@ -253,6 +265,7 @@ void ImageBuilder::drawCircle(Point2D& center, int r, Color& color){
     addElementBlock(GL_TRIANGLES, precision*3, 0.0f, m_BaseShdr->getId(), nullptr);
 
 }
+
 
 void ImageBuilder::drawArc(Point2D& center, int r, int from, int to, Color& col){
     if(to < from){
@@ -281,9 +294,7 @@ void ImageBuilder::drawArc(Point2D& center, int r, int from, int to, Color& col)
 }
 
 void ImageBuilder::drawRing(Point2D& center, int inR, int outR, Color& color){
-    // Center point
-    //int startElemId = addVert(center.x, center.y, color);
-
+    /*
     int precision = 180;
     int outEID[precision], inEID[precision];
 
@@ -321,8 +332,47 @@ void ImageBuilder::drawRing(Point2D& center, int inR, int outR, Color& color){
     m_VertIdx[m_NextElemPos++] = inEID[0];
     m_VertIdx[m_NextElemPos++] = outEID[0];
     addElementBlock(GL_TRIANGLES, precision*6, 0.0f, m_BaseShdr->getId(), nullptr);
+    */
+
+    drawRingArc(center, inR, outR, 0,360, color);
+}
+
+void ImageBuilder::drawRingArc(Point2D& center, int inR, int outR, int from, int to, Color& color){
+    int precision = to-from;
+    int outEID[precision], inEID[precision];
+
+    // Ring points
+    int inpx, inpy, outpx, outpy, arrIdx;
+    // expensive computation
+    double cosVal, sinVal;
+    for(int i = from; i <= to; i++){
+        arrIdx = i-from;
+        cosVal = cos(M_PI * i*2 / 360);
+        sinVal = sin(M_PI * i*2 / 360);
+
+        inpx = center.x + cosVal * inR;
+        inpy = center.y + sinVal * inR;
+        outpx = center.x + cosVal * outR;
+        outpy = center.y + sinVal * outR;
+
+        inEID[arrIdx] = addVert(inpx, inpy, color);
+        outEID[arrIdx] = addVert(outpx, outpy, color);
+
+        if(i >= from+1){
+            m_VertIdx[m_NextElemPos++] = inEID[arrIdx-1];
+            m_VertIdx[m_NextElemPos++] = outEID[arrIdx-1];
+            m_VertIdx[m_NextElemPos++] = outEID[arrIdx];
+            m_VertIdx[m_NextElemPos++] = inEID[arrIdx-1];
+            m_VertIdx[m_NextElemPos++] = inEID[arrIdx];
+            m_VertIdx[m_NextElemPos++] = outEID[arrIdx];
+        } 
+
+    }
+    
+    addElementBlock(GL_TRIANGLES, precision*6, 0.0f, m_BaseShdr->getId(), nullptr);
 
 }
+
 
 void ImageBuilder::drawLine(Point2D* ps, int w, Color& color){
     if(w > m_LineWidthRange[1]){

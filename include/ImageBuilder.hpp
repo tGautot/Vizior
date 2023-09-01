@@ -57,6 +57,10 @@ namespace Vizior {
     extern Color PRPL;
     extern Color ORG;
     extern Color GREY;
+    extern Color DRK_RED;
+    extern Color DRK_BLU;
+    extern Color DRK_GRN;
+    extern Color SKY_BLU;
 
     class ImageBuilder {
     friend class Window;
@@ -75,8 +79,10 @@ namespace Vizior {
         // TODO make it actual polygon, not convex hull
         void drawPolygon(Point2D* pts, int n, Color&);
         void drawCircle(Point2D& center, int r, Color&);
+        void drawEllipse(Point2D& center, int rx, int ry, int rot, Color&);
         void drawRing(Point2D& center, int inR, int outR, Color&);
         void drawArc(Point2D& center, int r, int from, int to, Color&);
+        void drawRingArc(Point2D& center, int inR, int outR, int from, int to, Color&);
         void drawLine(Point2D*, int w, Color&);
         void drawLine(Point2D*, int n, int w, Color&, bool loop);
         void drawPoint(Point2D& point, unsigned int sz, Color&);

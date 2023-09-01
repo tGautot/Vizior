@@ -77,6 +77,9 @@ void loop(int frameCount){
     src1->drawPolygon(poly, 5, CYN);
     src1->drawArc(center, 100,33,133,Vizior::ORG);
     src1->drawRing(center, 135,155, Vizior::CYN);
+    std::cout << "Got here" << std::endl;
+    src1->drawRingArc(center, 155,175, 45,225, Vizior::DRK_RED);
+    src1->drawEllipse(topr, 150,100,135,Vizior::SKY_BLU);
     //src2->drawTriangle(t1, Vizior::BLU);
     
 }

@@ -12,11 +12,11 @@ The goal of vizior is to bring to C++ the experience of using [p5js](https://p5j
  - [x] Draw Sprite
  - [x] Draw Text
  - [x] Draw Arc
- - [ ] Draw Elipse
+ - [x] Draw Elipse
  - [x] Draw Quad
  - [x] Draw Polygon
  - [x] Draw Ring
- - [ ] Draw Ring Arc
+ - [x] Draw Ring Arc
  - [ ] Draw bezier curves
  - [x] Enable alpha channel
  - [ ] Continuous integration
