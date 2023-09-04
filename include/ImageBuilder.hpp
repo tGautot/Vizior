@@ -65,7 +65,7 @@ namespace Vizior {
     class ImageBuilder {
     friend class Window;
     public:
-        ImageBuilder();
+        ImageBuilder(int memSize = 20'000);
         ~ImageBuilder();
 
         void setDimensions(int w, int h);

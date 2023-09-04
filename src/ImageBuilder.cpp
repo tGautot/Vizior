@@ -18,12 +18,10 @@ Color DRK_BLU = {0,100,0,255};
 Color DRK_GRN = {0,0,100,255};
 Color SKY_BLU = {100,170,255,255};
 
-ImageBuilder::ImageBuilder(){
-    // At most 10000 vertices
-    // TODO change this or handle it better
-    m_Verts = new float[m_nVertexVals*20000];
-    m_VertIdx = new unsigned int[3*20000];
-    m_ElemBlocks = new ElementBlock[1*20000];
+ImageBuilder::ImageBuilder(int size){
+    m_Verts = new float[m_nVertexVals*size];
+    m_VertIdx = new unsigned int[3*size];
+    m_ElemBlocks = new ElementBlock[3*size];
     m_NextElemPos = 0;
     m_NextVertPos = 0;
     m_NextElemBlockPos = 0;
