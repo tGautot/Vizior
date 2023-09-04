@@ -33,6 +33,12 @@ namespace Vizior {
         void drawSource();
         void setSource(std::shared_ptr<ImageBuilder> src);
 
+
+        Point2D getMouseWindowPos();
+        Point2D getMouseWorldPos();
+        bool isMousePressed();
+        bool isKeyPressed(int key);
+
         std::shared_ptr<ImageBuilder> getSource(){return m_Src;}
         int getWidth(){return this->m_Width;}
         int getHeight(){return this->m_Height;}

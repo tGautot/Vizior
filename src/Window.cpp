@@ -58,6 +58,29 @@ Window::~Window(){
     if(m_Src != nullptr) m_Src.reset();
 }
 
+Point2D Window::getMouseWindowPos(){
+    double x,y;
+    glfwGetCursorPos(m_glfw_Window, &x, &y);
+    // In GLFW 0,0 is TL, need to change y coord
+    return {(float)x, m_Height-(float)y};
+}
+
+Point2D Window::getMouseWorldPos(){
+    Point2D pos = getMouseWindowPos();
+    Point2D camPos = m_Camera->getPos();
+    pos = pos.rotateAroundBy(camPos, -(180*m_Camera->getRotZ())/M_PI);
+    pos += camPos - Point2D(m_Width/2, m_Height/2);
+    return pos;
+}
+
+bool Window::isMousePressed(){
+    return glfwGetMouseButton(m_glfw_Window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
+}
+
+bool Window::isKeyPressed(int key){
+    return glfwGetKey(m_glfw_Window, key) == GLFW_PRESS;
+}
+
 void Window::drawSource(){
     glfwMakeContextCurrent(m_glfw_Window);
     
@@ -75,6 +98,7 @@ void Window::drawSource(){
     glfwPollEvents();
 
     // TODO Call this elsewhere
+    // Updating cam should cause redraw, not the oposite
     updateCamPos();
 }
 
@@ -87,24 +111,25 @@ void Window::setSource(std::shared_ptr<ImageBuilder> src){
     src->setDimensions(m_Width, m_Height); 
 }
 
+// TODO put this in camera class
 void Window::updateCamPos()
 {
     Point2D camDir{0,0};
 
-    if (glfwGetKey(m_glfw_Window, GLFW_KEY_W) != GLFW_RELEASE)
+    if (isKeyPressed(GLFW_KEY_W))
         camDir.y+=1;
-    if (glfwGetKey(m_glfw_Window, GLFW_KEY_S) != GLFW_RELEASE)
+    if (isKeyPressed(GLFW_KEY_S))
         camDir.y-=1;
-    if (glfwGetKey(m_glfw_Window, GLFW_KEY_A) != GLFW_RELEASE)
+    if (isKeyPressed(GLFW_KEY_A))
         camDir.x-=1;
-    if (glfwGetKey(m_glfw_Window, GLFW_KEY_D) != GLFW_RELEASE)
+    if (isKeyPressed(GLFW_KEY_D))
         camDir.x+=1;
 
     float camRot = 0;
 
-    if(glfwGetKey(m_glfw_Window, GLFW_KEY_Q) == GLFW_PRESS)
+    if(isKeyPressed(GLFW_KEY_Q))
         camRot+=M_PI/180;
-    if(glfwGetKey(m_glfw_Window, GLFW_KEY_E) == GLFW_PRESS)
+    if(isKeyPressed(GLFW_KEY_E))
         camRot-=M_PI/180;
 
     m_Camera->movePos(camDir);

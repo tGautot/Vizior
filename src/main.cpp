@@ -17,16 +17,21 @@ const char *fontName = "abys";
 
 Vizior::FontManager *fontManager = Vizior::FontManager::getInstance();
 
+bool lastFrameMouseClicked = false;
+int newCircleRadius = 0;
+Vizior::Point2D newCirclePos;
 
 
 void loop(int frameCount){
-    std::cout << frameCount << std::endl; 
+    std::cout << frameCount << std::endl;
+    
+
     Vizior::Point2D center = {400,300};
     Vizior::Point2D other = {200,150};
     Vizior::Point2D topr = {800,600};
     Vizior::Point2D topl = {0,600};
-    Vizior::Point2D botr = {0,0};
-    Vizior::Point2D botl = {800,0};
+    Vizior::Point2D botr = {800,0};
+    Vizior::Point2D botl = {0,0};
 
     Vizior::Point2D pt = {700,500};
     
@@ -62,7 +67,6 @@ void loop(int frameCount){
         spiral[i*4+3]= {10+i*40,600-(10+i*30)};
     }
 
-
     src1->drawTriangle(t1, Vizior::RED);
     src1->drawTriangle(t2, Vizior::BLU);
     src1->drawImage(Vizior::ANCHOR_TL, center, containerImage, 200,200,0);
@@ -82,6 +86,22 @@ void loop(int frameCount){
     src1->drawEllipse(topr, 150,100,135,Vizior::SKY_BLU);
     //src2->drawTriangle(t1, Vizior::BLU);
     
+
+    if(win1->isMousePressed()){
+        newCircleRadius++;
+        lastFrameMouseClicked = true;
+        newCirclePos = win1->getMouseWorldPos();
+    } else if(lastFrameMouseClicked == true) {
+        newCircleRadius = 0;
+        lastFrameMouseClicked = false;
+    }
+
+    src1->drawCircle(newCirclePos, newCircleRadius, Vizior::DRK_GRN);
+
+    if(win1->isKeyPressed(GLFW_KEY_Y)){
+        src1->drawCircle(botl, 100, Vizior::DRK_RED);
+    }
+
 }
 
 int main(void)

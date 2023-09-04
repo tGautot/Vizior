@@ -18,6 +18,8 @@ The goal of vizior is to bring to C++ the experience of using [p5js](https://p5j
  - [x] Draw Ring
  - [x] Draw Ring Arc
  - [ ] Draw bezier curves
+ - [ ] Add a UI mode (where coord are screen, not world)
+ - [ ] Change buffer objects for growing arrays
  - [ ] Tesselation for polygon
  - [x] Enable alpha channel
  - [ ] Continuous integration

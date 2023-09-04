@@ -57,7 +57,6 @@ void ImageBuilder::compileBaseShaders(){
         "uniform vec2 vertSpace;\n" // WidthxHeight to map back to -1 1
         "void main()\n"
         "{ vertexColor = aColor; texPos = aTexPos;\n"
-        // Feel like it should be times 2, not 4, but what do I know, this works
         "gl_Position = (viewMat * vec4(aPos, 0.0, 1.0))/vec4(vertSpace/2, 1.0, 1.0);}\n\0";
 
     const char* baseFragmentShaderSrc =
