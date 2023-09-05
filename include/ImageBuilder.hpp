@@ -88,6 +88,7 @@ namespace Vizior {
         void drawPoint(Point2D& point, unsigned int sz, Color&);
         void drawImage(ANCHOR, Point2D& anch, Texture* image, int w, int h, int rot);
         void drawText(ANCHOR, Point2D& anch, std::string text, Color& col, const char* fontName, float scale, int rot);
+        void drawBezier(Point2D& p1, Point2D& p2, Point2D& c1, Point2D& c2, Color& col);
 
         Color getBackgroundColor(){return m_BgColor;}
         float* getVerts(){return m_Verts;}

@@ -350,7 +350,6 @@ void ImageBuilder::drawLine(Point2D* ps, int w, Color& color){
 }
 
 void ImageBuilder::drawLine(Point2D* ps, int n, int w, Color& color, bool loop){
-    if(n <= 2) {drawLine(ps, w, color); return;}
     if(w > m_LineWidthRange[1]){
         // Requested line width is too high for GPU
         // Since its a strip, cant really do rectangle
@@ -432,6 +431,35 @@ void ImageBuilder::drawText(ANCHOR a, Point2D& anch, std::string text, Color& co
         // now advance cursors for next glyph (note that advance is number of 1/64 pixels)
         x += (glyph->advance >> 6) * scale; // bitshift by 6 to get value in pixels (2^6 = 64)
     }
+}
+
+void ImageBuilder::drawBezier(Point2D& p1, Point2D& p2, Point2D& c1, Point2D& c2, Color& col){
+    int precision = 1000;
+    int step = 40; // in per/thousand (precision)
+    Point2D dir1 = c1 - p1;
+    Point2D dir2 = c2 - c1;
+    Point2D dir3 = p2 - c2;
+
+    Point2D t1, t2, t3, dirt1, dirt2;
+    Point2D f1, f2, dirf;
+    int arrSize = precision; // Not all will be used
+    Point2D pms[arrSize];
+    int vertCount = 0;
+    float i;
+    for(int perc = 0; perc <= precision; perc+=step){
+        i = 1.0f*perc/precision;
+        t1 = p1 + dir1*i;
+        t2 = c1 + dir2*i;
+        t3 = c2 + dir3*i;
+        dirt1 = t2 - t1;
+        dirt2 = t3 - t2;
+        f1 = t1 + dirt1*i;
+        f2 = t2 + dirt2*i;
+        dirf = f2-f1;
+        pms[vertCount] = f1+dirf*i;
+        vertCount++;
+    }
+    drawLine(pms, vertCount, 1, col, false);
 }
 
 

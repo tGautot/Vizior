@@ -67,6 +67,15 @@ void loop(int frameCount){
         spiral[i*4+3]= {10+i*40,600-(10+i*30)};
     }
 
+    Vizior::Point2D bezier[4] = {
+        botl,
+        topr,
+        botr,
+        topl,
+    };
+
+
+
     src1->drawTriangle(t1, Vizior::RED);
     src1->drawTriangle(t2, Vizior::BLU);
     src1->drawImage(Vizior::ANCHOR_TL, center, containerImage, 200,200,0);
@@ -85,7 +94,7 @@ void loop(int frameCount){
     src1->drawRingArc(center, 155,175, 45,225, Vizior::DRK_RED);
     src1->drawEllipse(topr, 150,100,135,Vizior::SKY_BLU);
     //src2->drawTriangle(t1, Vizior::BLU);
-    
+    src1->drawBezier(bezier[0], bezier[1], bezier[2], bezier[3], Vizior::PRPL);
 
     if(win1->isMousePressed()){
         newCircleRadius++;
@@ -110,6 +119,7 @@ int main(void)
     win1 = std::make_shared<Vizior::Window>(800,600,winName1);
     src1 = std::make_shared<Vizior::ImageBuilder>();
     win1->setSource(src1);
+    win1->setCameraEnabled(false);
     containerImage = Vizior::Texture::fromImage(image);
     std::cout << "Register window with id " << Vizior::registerWindow(win1) << std::endl;
     std::cout << "Created texture from image " << containerImage << " " << containerImage->getID() << std::endl;

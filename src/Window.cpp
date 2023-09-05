@@ -15,7 +15,7 @@ void glfw_scroll_callback(GLFWwindow* window, double xscroll, double yscroll){
 }
 
 Window::Window(int w, int h, const char* name)
-    : m_WinName(name), m_Width(w), m_Height(h) {
+    : m_WinName(name), m_Width(w), m_Height(h), m_CameraEnabled(true) {
     /* Initialize the library */
     if (!glfwInit()){
         std::cout << "Failed glfwInit(), make sure that external/glfw is populated" << std::endl;
@@ -51,6 +51,12 @@ Window::Window(int w, int h, const char* name)
     glfwSetWindowUserPointer(m_glfw_Window, this);
     //glfwSetKeyCallback(m_glfw_Window, glfw_key_callback);
     glfwSetScrollCallback(m_glfw_Window, glfw_scroll_callback);
+}
+
+void Window::resetCamera(){
+    m_Camera->setPos({m_Width/2, m_Height/2});
+    m_Camera->setRotZ(0);
+    m_Camera->setZoom(1);
 }
 
 Window::~Window(){
@@ -114,6 +120,7 @@ void Window::setSource(std::shared_ptr<ImageBuilder> src){
 // TODO put this in camera class
 void Window::updateCamPos()
 {
+    if(!m_CameraEnabled) return;
     Point2D camDir{0,0};
 
     if (isKeyPressed(GLFW_KEY_W))
@@ -138,6 +145,7 @@ void Window::updateCamPos()
 
 void Window::scrollCallback(double x, double y)
 {
+    if(!m_CameraEnabled) return;
     std::cout << "WINDOW SCROLL CALLBACK GOT VERT " << y << std::endl;
     
     // Delta zoom should be small when zoom already far from 1

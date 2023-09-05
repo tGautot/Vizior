@@ -48,17 +48,21 @@ namespace Vizior {
         bool shouldClose();
         //std::shared_ptr<Window> getSharedPtr(){return shared_from_this();}
 
+        void setCameraEnabled(bool val){m_CameraEnabled = val;};
+        void resetCamera();
+
     private:
         
         std::shared_ptr<ImageBuilder> m_Src = nullptr;
 
         Camera* m_Camera;
 
-
         unsigned int m_WinId;
         const char* m_WinName;  
         int m_Width, m_Height;
         GLFWwindow* m_glfw_Window;
+
+        bool m_CameraEnabled;
 
     };
 
