@@ -72,10 +72,10 @@ Point2D Window::getMouseWindowPos(){
 }
 
 Point2D Window::getMouseWorldPos(){
-    Point2D pos = getMouseWindowPos();
+    Point2D pos = (getMouseWindowPos() - Point2D(m_Width/2, m_Height/2))/m_Camera->getZoom();
     Point2D camPos = m_Camera->getPos();
-    pos = pos.rotateAroundBy(camPos, -(180*m_Camera->getRotZ())/M_PI);
-    pos += camPos - Point2D(m_Width/2, m_Height/2);
+    pos += camPos;
+    pos = pos.rotateAroundBy(camPos, (180*m_Camera->getRotZ())/M_PI);
     return pos;
 }
 

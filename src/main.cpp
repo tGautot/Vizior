@@ -119,7 +119,6 @@ int main(void)
     win1 = std::make_shared<Vizior::Window>(800,600,winName1);
     src1 = std::make_shared<Vizior::ImageBuilder>();
     win1->setSource(src1);
-    win1->setCameraEnabled(false);
     containerImage = Vizior::Texture::fromImage(image);
     std::cout << "Register window with id " << Vizior::registerWindow(win1) << std::endl;
     std::cout << "Created texture from image " << containerImage << " " << containerImage->getID() << std::endl;

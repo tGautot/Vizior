@@ -18,6 +18,7 @@ The goal of vizior is to bring to C++ the experience of using [p5js](https://p5j
  - [x] Draw Ring
  - [x] Draw Ring Arc
  - [x] Draw bezier curves
+ - [ ] Draw only outline of shapes
  - [ ] Add a UI mode (where coord are screen, not world)
  - [x] Make it possible to change size of imagebuilder's arrays
  - [ ] Triangulation for polygon
