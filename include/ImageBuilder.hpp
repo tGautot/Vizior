@@ -2,7 +2,8 @@
  * @file ImageBuilder.hpp
  * @author Tom Gautot (tgautot.off@gmail.com)
  * @brief ImageBuilder serves as the portal between the programmer and OpenGL,
- * It is its only purpose, nothing window-related should be done here (for example, no include of GLFW here)  
+ * It is its only purpose, nothing window-related should be done here idealy GLFW shouldn't even be imported
+ * But since in GLFW window and opengl context are the same, we cannot do without it  
  * @version 0.1
  * @date 2023-08-23
  * 
@@ -18,6 +19,7 @@
 #include <cstdint>
 #include <iostream>
 #include <string>
+#include <memory>
 #include "Point2D.hpp"
 #include "Texture.hpp"
 #include "FontManager.hpp"
@@ -25,10 +27,11 @@
 #include "Camera.hpp"
 
 // Maybe forward declaration of class is bad, read about it
-class Window;
 
 namespace Vizior {
 
+    class Window;
+    
     enum ANCHOR {
         ANCHOR_TR, ANCHOR_TL, ANCHOR_BR, ANCHOR_BL, ANCHOR_C // Top-Bottom Left-Right Center
     };
@@ -104,6 +107,7 @@ namespace Vizior {
         Camera* getLatestCamera(){return m_Camera;}
         int getWidth(){return m_Width;}
         int getHeight(){return m_Height;}
+        std::shared_ptr<Window> getDefaultWindow(){return m_DfltWindow;};
     protected:
         void submit();
     private:
@@ -111,9 +115,12 @@ namespace Vizior {
         int addVert(int x, int y, float s, float t);
         int addVert(int x, int y, Color& color, float s, float t);
         void addElementBlock(GLenum mode, int vertexCount, unsigned int size, unsigned int shdrProg, Texture* tex);
+        
         // TODO Make it so people that know how to write shader can modify the shaders used
         void compileBaseShaders();
 
+        std::shared_ptr<Window> m_DfltWindow;
+        int bitch;
         // OpenGL related values
         GLfloat m_LineWidthRange[2] = {0.0f, 0.0f};
 

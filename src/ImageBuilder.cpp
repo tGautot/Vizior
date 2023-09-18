@@ -1,4 +1,7 @@
 #include "ImageBuilder.hpp"
+// TODO Find other way to handle this circular dependendy
+// Compile time might become an issue with current solution
+#include "Window.hpp"
 
 namespace Vizior {
 
@@ -27,6 +30,9 @@ ImageBuilder::ImageBuilder(int size){
     m_NextElemBlockPos = 0;
     m_CurrElemID = 0;
 
+    // Before ANY opengl call, setup context by creating window
+    m_DfltWindow = std::make_shared<Window>(0,0,"Empty for src");
+    
     m_FontManager = FontManager::getInstance();
 
     glGetFloatv(GL_ALIASED_LINE_WIDTH_RANGE, m_LineWidthRange);
