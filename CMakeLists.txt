@@ -11,6 +11,7 @@ include_directories( ${OPENGL_INCLUDE_DIRS} )
 set( GLFW_BUILD_DOCS OFF CACHE BOOL  "GLFW lib only" )
 set( GLFW_INSTALL OFF CACHE BOOL  "GLFW lib only" )
 SET( GCC_COVERAGE_COMPILE_FLAGS "-Wwrite-strings" )
+set( CMAKE_EXPORT_COMPILE_COMMANDS ON )
 
 add_subdirectory( external/glfw )
 add_subdirectory( external/freetype )

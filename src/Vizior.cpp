@@ -37,6 +37,10 @@ bool shoudKeepLooping(){
     return should;
 }
 
+void setTargetFramerate(uint16_t target){
+    targetFrameRate = target;
+}
+
 void Start(){
     int fc = 0;
     while(shoudKeepLooping()){

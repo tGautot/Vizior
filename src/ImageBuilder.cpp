@@ -1,5 +1,7 @@
 #include "ImageBuilder.hpp"
 
+#define PB(vec, val) vec.push_back(val)
+
 namespace Vizior {
 
 Color RED = {255,0,0,255};
@@ -19,12 +21,9 @@ Color DRK_GRN = {0,0,100,255};
 Color SKY_BLU = {100,170,255,255};
 
 ImageBuilder::ImageBuilder(int size){
-    m_Verts = new float[m_nVertexVals*size];
-    m_VertIdx = new unsigned int[3*size];
-    m_ElemBlocks = new ElementBlock[3*size];
-    m_NextElemPos = 0;
-    m_NextVertPos = 0;
-    m_NextElemBlockPos = 0;
+    m_Verts.reserve(m_nVertexVals*size);
+    m_VertIdx.reserve(3*size);
+    m_ElemBlocks.reserve(3*size);
     m_CurrElemID = 0;
 
     m_FontManager = FontManager::getInstance();
@@ -90,9 +89,6 @@ void ImageBuilder::compileBaseShaders(){
 }
 
 ImageBuilder::~ImageBuilder(){
-    delete[] m_Verts;
-    delete[] m_VertIdx;
-    delete[] m_ElemBlocks;
     delete m_BaseShdr;
     delete m_TexShdr;
     delete m_GlyphShdr;
@@ -108,45 +104,43 @@ int ImageBuilder::addVert(int x, int y, float s, float t){
 }
 
 int ImageBuilder::addVert(int x, int y, Color& color, float s, float t){
-    m_Verts[m_NextVertPos++] = (1.0f * x);
-    m_Verts[m_NextVertPos++] = (1.0f * y);
-    m_Verts[m_NextVertPos++] = color.r/255.0;
-    m_Verts[m_NextVertPos++] = color.g/255.0;
-    m_Verts[m_NextVertPos++] = color.b/255.0;
-    m_Verts[m_NextVertPos++] = color.a/255.0;
-    m_Verts[m_NextVertPos++] = s;
-    m_Verts[m_NextVertPos++] = t;
+    PB(m_Verts, (1.0f * x));
+    PB(m_Verts, (1.0f * y));
+    PB(m_Verts, color.r/255.0);
+    PB(m_Verts, color.g/255.0);
+    PB(m_Verts, color.b/255.0);
+    PB(m_Verts, color.a/255.0);
+    PB(m_Verts, s);
+    PB(m_Verts, t);
     return m_CurrElemID++;
 }
 
 void ImageBuilder::addElementBlock(GLenum mode, int elemCount, unsigned int size, unsigned int shdrProg, Texture* tex){
     if(size < 1) size = 1;
-    if(m_NextElemBlockPos == 0){
-        m_ElemBlocks[0] = {mode, 0, elemCount, size, shdrProg, tex};
-        m_NextElemBlockPos++;
+    if(m_ElemBlocks.size() == 0){
+        m_ElemBlocks.push_back({mode, 0, elemCount, size, shdrProg, tex});
         return;
     }
-    ElementBlock lastBlock = m_ElemBlocks[m_NextElemBlockPos-1];
+    ElementBlock& lastBlock = m_ElemBlocks.back();
     GLenum lastMode = lastBlock.mode;
     if(lastMode == mode && (lastMode == GL_TRIANGLES || lastMode == GL_POINTS) && lastBlock.size == size 
             && lastBlock.shdrProg == shdrProg && lastBlock.texture == tex){
-        m_ElemBlocks[m_NextElemBlockPos-1].cnt += elemCount;
+        lastBlock.cnt += elemCount;
         return;
     }
-    m_ElemBlocks[m_NextElemBlockPos] = {mode, lastBlock.start + lastBlock.cnt, elemCount, size, shdrProg, tex};
-    m_NextElemBlockPos++;
+    m_ElemBlocks.push_back({mode, lastBlock.start + lastBlock.cnt, elemCount, size, shdrProg, tex});
 }
 
 void ImageBuilder::clearAll(){
-    m_NextElemPos = 0;
-    m_NextVertPos = 0;
-    m_NextElemBlockPos = 0;
     m_CurrElemID = 0;
+    m_ElemBlocks.clear();
+    m_Verts.clear();
+    m_VertIdx.clear();
 }
 
 void ImageBuilder::drawTriangle(Point2D* ps, Color& color){
     for(int i = 0; i < 3; i++){
-        m_VertIdx[m_NextElemPos++] = addVert(ps[i].x, ps[i].y, color);
+        m_VertIdx.push_back(addVert(ps[i].x, ps[i].y, color));
     }
     addElementBlock(GL_TRIANGLES, 3, 0.0f, m_BaseShdr->getId(), nullptr);
 }
@@ -206,12 +200,12 @@ void ImageBuilder::drawRect(ANCHOR a, Point2D& anch, int w, int h, float rot, Co
 
     delete[] corners;
     
-    m_VertIdx[m_NextElemPos++] = blIdx;
-    m_VertIdx[m_NextElemPos++] = tlIdx;
-    m_VertIdx[m_NextElemPos++] = brIdx;
-    m_VertIdx[m_NextElemPos++] = trIdx;
-    m_VertIdx[m_NextElemPos++] = brIdx;
-    m_VertIdx[m_NextElemPos++] = tlIdx;
+    PB(m_VertIdx, blIdx);
+    PB(m_VertIdx, tlIdx);
+    PB(m_VertIdx, brIdx);
+    PB(m_VertIdx, trIdx);
+    PB(m_VertIdx, brIdx);
+    PB(m_VertIdx, tlIdx);
 
 
     addElementBlock(GL_TRIANGLE_STRIP, 6, 0.0f, m_BaseShdr->getId(), nullptr);
@@ -223,7 +217,7 @@ void ImageBuilder::drawQuad(Point2D* pts, Color& col){
 
 void ImageBuilder::drawPolygon(Point2D* pts, int n, Color& col){
     for(int i = 0; i < n; i++){
-        m_VertIdx[m_NextElemPos++] = addVert(pts[i].x, pts[i].y, col);
+        m_VertIdx.push_back(addVert(pts[i].x, pts[i].y, col));
     }
     addElementBlock(GL_TRIANGLE_FAN, n, 0.0f, m_BaseShdr->getId(), nullptr);
 }
@@ -250,16 +244,16 @@ void ImageBuilder::drawEllipse(Point2D& center, int rx, int ry, int rot, Color& 
         beforeLast = last;
         last = addVert(edgePt.x, edgePt.y, color);
         if(i >= 1){
-            m_VertIdx[m_NextElemPos++] = startElemId;
-            m_VertIdx[m_NextElemPos++] = beforeLast;
-            m_VertIdx[m_NextElemPos++] = last;
+            PB(m_VertIdx, startElemId);
+            PB(m_VertIdx, beforeLast);
+            PB(m_VertIdx, last);
         } 
         if(i == 0){ first = last;}
 
     }
-    m_VertIdx[m_NextElemPos++] = startElemId;
-    m_VertIdx[m_NextElemPos++] = last;
-    m_VertIdx[m_NextElemPos++] = first;
+    PB(m_VertIdx, startElemId);
+    PB(m_VertIdx, last);
+    PB(m_VertIdx, first);
     addElementBlock(GL_TRIANGLES, precision*3, 0.0f, m_BaseShdr->getId(), nullptr);
 
 }
@@ -282,9 +276,9 @@ void ImageBuilder::drawArc(Point2D& center, int r, int from, int to, Color& col)
         beforeLast = last;
         last = addVert(px, py, col);
         if(i >= from+1){
-            m_VertIdx[m_NextElemPos++] = startElemId;
-            m_VertIdx[m_NextElemPos++] = beforeLast;
-            m_VertIdx[m_NextElemPos++] = last;
+            PB(m_VertIdx, startElemId);
+            PB(m_VertIdx, beforeLast);
+            PB(m_VertIdx, last);
         } 
     }
     addElementBlock(GL_TRIANGLES, tris*3, 0.0f, m_BaseShdr->getId(), nullptr);
@@ -317,12 +311,12 @@ void ImageBuilder::drawRingArc(Point2D& center, int inR, int outR, int from, int
         outEID[arrIdx] = addVert(outpx, outpy, color);
 
         if(i >= from+1){
-            m_VertIdx[m_NextElemPos++] = inEID[arrIdx-1];
-            m_VertIdx[m_NextElemPos++] = outEID[arrIdx-1];
-            m_VertIdx[m_NextElemPos++] = outEID[arrIdx];
-            m_VertIdx[m_NextElemPos++] = inEID[arrIdx-1];
-            m_VertIdx[m_NextElemPos++] = inEID[arrIdx];
-            m_VertIdx[m_NextElemPos++] = outEID[arrIdx];
+            PB(m_VertIdx, inEID[arrIdx-1]);
+            PB(m_VertIdx, outEID[arrIdx-1]);
+            PB(m_VertIdx, outEID[arrIdx]);
+            PB(m_VertIdx, inEID[arrIdx-1]);
+            PB(m_VertIdx, inEID[arrIdx]);
+            PB(m_VertIdx, outEID[arrIdx]);
         } 
 
     }
@@ -344,8 +338,8 @@ void ImageBuilder::drawLine(Point2D* ps, int w, Color& color){
         return;
     }
     // Pure OpenGL line
-    m_VertIdx[m_NextElemPos++] = addVert(ps[0].x, ps[0].y, color);
-    m_VertIdx[m_NextElemPos++] = addVert(ps[1].x, ps[1].y, color);
+    m_VertIdx.push_back(addVert(ps[0].x, ps[0].y, color));
+    m_VertIdx.push_back(addVert(ps[1].x, ps[1].y, color));
     addElementBlock(GL_LINE_STRIP, 2, w, m_BaseShdr->getId(), nullptr);
 }
 
@@ -358,14 +352,14 @@ void ImageBuilder::drawLine(Point2D* ps, int n, int w, Color& color, bool loop){
     }
     // Pure OpenGL line
     for(int i = 0; i < n; i++){
-        m_VertIdx[m_NextElemPos++] = addVert(ps[i].x, ps[i].y, color);
+        m_VertIdx.push_back(addVert(ps[i].x, ps[i].y, color));
     }
     addElementBlock(loop ? GL_LINE_LOOP : GL_LINE_STRIP, n, w, m_BaseShdr->getId(), nullptr);
 }
 
 
 void ImageBuilder::drawPoint(Point2D& pt, unsigned int sz, Color& color){
-    m_VertIdx[m_NextElemPos++] = addVert(pt.x, pt.y, color);
+    m_VertIdx.push_back(addVert(pt.x, pt.y, color));
     addElementBlock(GL_POINTS, 1, sz, m_BaseShdr->getId(), nullptr);
 }
 
@@ -380,12 +374,12 @@ void ImageBuilder::drawImage(ANCHOR a, Point2D& anch, Texture* image, int w, int
 
     delete[] corners;
 
-    m_VertIdx[m_NextElemPos++] = blIdx;
-    m_VertIdx[m_NextElemPos++] = tlIdx;
-    m_VertIdx[m_NextElemPos++] = brIdx;
-    m_VertIdx[m_NextElemPos++] = trIdx;
-    m_VertIdx[m_NextElemPos++] = brIdx;
-    m_VertIdx[m_NextElemPos++] = tlIdx;
+    PB(m_VertIdx, blIdx);
+    PB(m_VertIdx, tlIdx);
+    PB(m_VertIdx, brIdx);
+    PB(m_VertIdx, trIdx);
+    PB(m_VertIdx, brIdx);
+    PB(m_VertIdx, tlIdx);
 
     addElementBlock(GL_TRIANGLE_STRIP, 6, 0.0f, m_TexShdr->getId(), image);
 }
@@ -418,12 +412,12 @@ void ImageBuilder::drawText(ANCHOR a, Point2D& anch, std::string text, Color& co
 
         delete[] corners;
 
-        m_VertIdx[m_NextElemPos++] = blIdx;
-        m_VertIdx[m_NextElemPos++] = tlIdx;
-        m_VertIdx[m_NextElemPos++] = brIdx;
-        m_VertIdx[m_NextElemPos++] = trIdx;
-        m_VertIdx[m_NextElemPos++] = brIdx;
-        m_VertIdx[m_NextElemPos++] = tlIdx;
+        PB(m_VertIdx, blIdx);
+        PB(m_VertIdx, tlIdx);
+        PB(m_VertIdx, brIdx);
+        PB(m_VertIdx, trIdx);
+        PB(m_VertIdx, brIdx);
+        PB(m_VertIdx, tlIdx);
 
 
         addElementBlock(GL_TRIANGLE_STRIP, 6, 0.0f, m_GlyphShdr->getId(), glyph->tex);
@@ -479,9 +473,9 @@ void ImageBuilder::submit(){
 
     glBindVertexArray(m_VAO);
     glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
-    glBufferData(GL_ARRAY_BUFFER, getVertCount()*sizeof(float), getVerts(), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, m_Verts.size()*sizeof(float), m_Verts.data(), GL_STATIC_DRAW);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, getElemCount()*sizeof(unsigned int), getEBO(), GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, m_VertIdx.size()*sizeof(unsigned int), m_VertIdx.data(), GL_STATIC_DRAW);
 
     // Function gives info about the vertex in the "vertices" array and how they should be used
     // for the vertex shader
@@ -510,7 +504,7 @@ void ImageBuilder::submit(){
     glUseProgram(currProgram);
     glBindVertexArray(m_VAO); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
 
-    int nBlock = getElemBlockCount();
+    int nBlock = m_ElemBlocks.size();
     //std::cout << "There are " << nBlock << " elem blocks" << std::endl;
 
     float viewMat[16];
@@ -533,7 +527,7 @@ void ImageBuilder::submit(){
     }
 
     for(int i = 0; i < nBlock; i++){
-        ElementBlock block = m_ElemBlocks[i];
+        ElementBlock& block = m_ElemBlocks[i];
         
         //std::cout << "Drawing block of mode " << block.mode << " from " << block.start << " of " << block.cnt << " elements, size " << block.size << " and texture " << block.texture << std::endl;
 

@@ -18,6 +18,8 @@
 #include <cstdint>
 #include <iostream>
 #include <string>
+#include <vector>
+
 #include "Point2D.hpp"
 #include "Texture.hpp"
 #include "FontManager.hpp"
@@ -91,12 +93,6 @@ namespace Vizior {
         void drawBezier(Point2D& p1, Point2D& p2, Point2D& c1, Point2D& c2, Color& col);
 
         Color getBackgroundColor(){return m_BgColor;}
-        float* getVerts(){return m_Verts;}
-        int getVertCount(){return m_NextVertPos;}
-        unsigned int* getEBO(){return m_VertIdx;}
-        int getElemCount(){return m_NextElemPos;}
-        ElementBlock* getElemBlocks(){return m_ElemBlocks;}
-        int getElemBlockCount(){return m_NextElemBlockPos;}
 
         void setCamera(Camera* camSrc){m_Camera = camSrc;}
         void setBackgroundColor(Color col){m_BgColor = col;}
@@ -104,9 +100,9 @@ namespace Vizior {
         Camera* getLatestCamera(){return m_Camera;}
         int getWidth(){return m_Width;}
         int getHeight(){return m_Height;}
-    protected:
+
         void submit();
-    private:
+
         int addVert(int x, int y, Color& color);
         int addVert(int x, int y, float s, float t);
         int addVert(int x, int y, Color& color, float s, float t);
@@ -128,14 +124,11 @@ namespace Vizior {
 
         // Each "vertex" is xyrgba
         const int m_nVertexVals = 8; // number of vals in one "vertex" (xyrgbast)
-        float* m_Verts; // All vertex info (xyrgba or xyst) 
-        int m_NextVertPos; // Next pos to put vertex info, in above arrays
-        unsigned int* m_VertIdx; // Our EBO buffer
-        int m_NextElemPos; // Next pos to fill in m_VertIdx
+        std::vector<float> m_Verts; // All vertex info (xyrgba or xyst) 
+        std::vector<unsigned int> m_VertIdx; // Our EBO buffer
         int m_CurrElemID; // The number of complete vertex in the array (should be nextpos/nVals)
 
-        ElementBlock* m_ElemBlocks;
-        int m_NextElemBlockPos;
+        std::vector<ElementBlock> m_ElemBlocks;
 
         unsigned int m_EBO, m_VAO, m_VBO;
         Shader *m_BaseShdr, *m_TexShdr, *m_GlyphShdr; 
