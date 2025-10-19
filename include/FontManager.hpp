@@ -7,7 +7,7 @@
 #include <cstring>
 #include "Texture.hpp"
 
-namespace Vizior {
+namespace vzr {
 
 struct GlyphDescriptor {
     unsigned char c;

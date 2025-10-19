@@ -1,6 +1,6 @@
 #include "FontManager.hpp"
 
-namespace Vizior {
+namespace vzr {
 
 FontManager* FontManager::instance = nullptr;
 

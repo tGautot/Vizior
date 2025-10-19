@@ -1,6 +1,6 @@
 #include "Shaders.hpp"
 
-namespace Vizior {
+namespace vzr {
 
 Shader::Shader(const char* vertCode, const char* fragCode){
     // ----------------------------------------------------

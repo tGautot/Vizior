@@ -6,7 +6,7 @@
 #include <iostream>
 #include <string>
 
-namespace Vizior {
+namespace vzr {
 
 class Texture {
 public:

@@ -1,4 +1,4 @@
-cmake_minimum_required( VERSION 3.1 )
+cmake_minimum_required( VERSION 3.21 )
 
 project( Vizior )
 
@@ -16,6 +16,32 @@ set( CMAKE_EXPORT_COMPILE_COMMANDS ON )
 add_subdirectory( external/glfw )
 add_subdirectory( external/freetype )
    
-add_executable( Vizior WIN32 src/main.cpp src/glad.c src/Point2D.cpp src/ImageBuilder.cpp src/Window.cpp src/stbImageLoader.cpp src/Texture.cpp src/FontManager.cpp src/Shaders.cpp src/Camera.cpp src/Vizior.cpp )
-target_link_libraries( Vizior ${OPENGL_LIBRARIES} glfw freetype )
+add_library( Vizior STATIC )
+target_sources(Vizior 
+  PUBLIC
+    ./include/Point2D.hpp 
+    ./include/ImageBuilder.hpp 
+    ./include/Window.hpp 
+    ./include/Texture.hpp 
+    ./include/FontManager.hpp 
+    ./include/Shaders.hpp 
+    ./include/Camera.hpp 
+    ./include/Vizior.hpp
+  PRIVATE
+    ./src/glad.c 
+    ./src/Point2D.cpp 
+    ./src/ImageBuilder.cpp 
+    ./src/Window.cpp 
+    ./src/stbImageLoader.cpp 
+    ./src/Texture.cpp 
+    ./src/FontManager.cpp 
+    ./src/Shaders.cpp 
+    ./src/Camera.cpp 
+    ./src/Vizior.cpp)
+
 target_include_directories( Vizior PUBLIC ./include PUBLIC external/glfw/include PUBLIC external/FreeType/include PUBLIC external )
+target_link_libraries( Vizior ${OPENGL_LIBRARIES} glfw freetype )
+
+add_executable( vzrSample WIN32 src/main.cpp)
+target_include_directories(vzrSample PUBLIC ./include)
+target_link_libraries(vzrSample Vizior)

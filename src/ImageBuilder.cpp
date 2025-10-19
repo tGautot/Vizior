@@ -2,7 +2,7 @@
 
 #define PB(vec, val) vec.push_back(val)
 
-namespace Vizior {
+namespace vzr {
 
 Color RED = {255,0,0,255};
 Color GRN = {0,255,0,255};
@@ -213,6 +213,10 @@ void ImageBuilder::drawRect(ANCHOR a, Point2D& anch, int w, int h, float rot, Co
 
 void ImageBuilder::drawQuad(Point2D* pts, Color& col){
     drawPolygon(pts, 4, col);
+}
+
+void ImageBuilder::void drawGrid(Point2D& top_left, int width, int height, Color* colors, int rows, int cols){
+
 }
 
 void ImageBuilder::drawPolygon(Point2D* pts, int n, Color& col){

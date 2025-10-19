@@ -1,6 +1,7 @@
 #include "Vizior.hpp"
+#include <sys/time.h>
 
-namespace Vizior {
+namespace vzr {
 
 Window easyWin = Window(1,1,"aaa");
 loop_func loop = NULL;
@@ -41,12 +42,27 @@ void setTargetFramerate(uint16_t target){
     targetFrameRate = target;
 }
 
+double getTimeSec(){
+    struct timeval tv;
+    gettimeofday(&tv,NULL);
+    return 1.0*tv.tv_sec + tv.tv_usec/(1'000'000.0);
+}
+
 void Start(){
     int fc = 0;
+    double delta = 1.0/targetFrameRate;
+    double framestt = 0;
     while(shoudKeepLooping()){
         std::cout << "Looping " << fc << std::endl;
-        loop(fc++);
-        usleep(1000000 * 1.0/targetFrameRate);
+        
+        double time = getTimeSec();
+        if(framestt > 0.1){ 
+            delta = time - framestt;
+        }
+        framestt = time;
+        
+        loop(fc++, delta);
+        usleep(1'000'000 * 1.0/targetFrameRate);
         for(int i = 0; i < windows.size(); i++){
             if(windows[i] == NULL) continue;
             windows[i]->drawSource();

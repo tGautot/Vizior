@@ -29,7 +29,7 @@
 // Maybe forward declaration of class is bad, read about it
 class Window;
 
-namespace Vizior {
+namespace vzr {
 
     enum ANCHOR {
         ANCHOR_TR, ANCHOR_TL, ANCHOR_BR, ANCHOR_BL, ANCHOR_C // Top-Bottom Left-Right Center
@@ -77,6 +77,7 @@ namespace Vizior {
         void drawTriangle(Point2D*, Color&);
         void drawRect(ANCHOR, Point2D& anch, int w, int h, float rot, Color&);
         void drawQuad(Point2D* pts, Color&);
+        void drawGrid(Point2D& top_left, int width, int height, Color* colors, int rows, int cols);
         // Draws the convex hull defined by the n points
         // TODO make it actual polygon, not convex hull
         void drawPolygon(Point2D* pts, int n, Color&);

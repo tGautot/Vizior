@@ -1,6 +1,6 @@
 #include "Texture.hpp"
 
-namespace Vizior {
+namespace vzr {
 
 Texture* Texture::fromImage(const char* filepath){
     Texture* tex = new Texture();

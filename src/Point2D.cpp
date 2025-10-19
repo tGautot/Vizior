@@ -1,6 +1,6 @@
 #include "Point2D.hpp"
 
-namespace Vizior {
+namespace vzr {
     Point2D::Point2D(): x(0), y(0){}
     Point2D::Point2D(int x, int y) : x(1.0f*x), y(1.0f*y){}
     Point2D::Point2D(float x, float y) : x(x), y(y){}

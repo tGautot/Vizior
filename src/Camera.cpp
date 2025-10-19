@@ -1,6 +1,6 @@
 #include "Camera.hpp"
 
-namespace Vizior {
+namespace vzr {
 
 void Camera::setZoom(float z){
     if(z < 0.0001f){

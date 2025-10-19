@@ -13,9 +13,9 @@
 #include "Window.hpp"
 
 
-namespace Vizior {
+namespace vzr {
 
-    typedef void (*loop_func)(int);
+    typedef void (*loop_func)(int, double);
     
     extern loop_func loop;
     extern int16_t targetFrameRate;

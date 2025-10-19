@@ -4,7 +4,7 @@
 #include <Point2D.hpp>
 #include <iostream>
 
-namespace Vizior {
+namespace vzr {
 
 class Camera {
 public:

@@ -4,7 +4,7 @@
 #include <glad/glad.h>
 #include <iostream>
 
-namespace Vizior {
+namespace vzr {
 
 class Shader {
 public:

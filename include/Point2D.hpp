@@ -13,7 +13,7 @@
 
 #include <math.h>
 
-namespace Vizior {
+namespace vzr {
 
 
     class Point2D {
