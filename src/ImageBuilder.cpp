@@ -215,7 +215,34 @@ void ImageBuilder::drawQuad(Point2D* pts, Color& col){
     drawPolygon(pts, 4, col);
 }
 
-void ImageBuilder::void drawGrid(Point2D& top_left, int width, int height, Color* colors, int rows, int cols){
+void ImageBuilder::drawGrid(Point2D& top_left, int width, int height, Color* colors, int rows, int cols){
+    // There are nrows of point, but that means n-1 "Lines" of triangle strips
+    std::vector<std::vector<int>> gridVertIds;
+    gridVertIds.resize(rows);
+    for(int i = 0; i < rows; i++){
+        gridVertIds[i].resize(cols);
+        for(int j = 0; j < cols; j++){
+            gridVertIds[i][j] = addVert(top_left.x + j*width/cols, top_left.y + i*height/rows, colors[i*cols + j]);
+        }
+    }
+
+    int nElemsPre = m_VertIdx.size();
+    for(int i = 0; i < rows-1; i++){
+        m_VertIdx.push_back(gridVertIds[i][0]);
+        for(int j = 0; j < cols-1; j++){
+            m_VertIdx.push_back(gridVertIds[i+1][j]);
+            m_VertIdx.push_back(gridVertIds[i][j+1]);
+        }
+        m_VertIdx.push_back(gridVertIds[i+1][cols-1]);
+        // Duplicate that one, and first one of next loop
+        // this will create "degenerate" triangles (all 3 vertices on the same line)
+        // But at least we can draw all strips as a single element
+        m_VertIdx.push_back(gridVertIds[i+1][cols-1]);
+        m_VertIdx.push_back(gridVertIds[i+1][0]);
+        
+    }
+
+    addElementBlock(GL_TRIANGLE_STRIP, m_VertIdx.size() - nElemsPre, 0.0f, m_BaseShdr->getId(), nullptr);
 
 }
 

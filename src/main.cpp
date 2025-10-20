@@ -77,7 +77,7 @@ void loop(int frameCount, double timestep){
 
 
 
-    src1->drawTriangle(t1, vzr::RED);
+    /*src1->drawTriangle(t1, vzr::RED);
     src1->drawTriangle(t2, vzr::BLU);
     src1->drawImage(vzr::ANCHOR_TL, center, containerImage, 200,200,0);
     for(int i = 0; i < 4; i++){
@@ -110,7 +110,10 @@ void loop(int frameCount, double timestep){
 
     if(win1->isKeyPressed(vzr::Key::KEY_Y)){
         src1->drawCircle(botl, 100, vzr::DRK_RED);
-    }
+    }*/
+
+    vzr::Color grid[9] = {vzr::BLU, vzr::BLU, vzr::BLU, vzr::BLU, vzr::RED, vzr::BLU, vzr::BLU, vzr::BLU, vzr::BLU};
+    src1->drawGrid(botl, 500, 500, grid, 3, 3);
 
 }
 
