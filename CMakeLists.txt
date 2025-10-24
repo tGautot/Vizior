@@ -13,12 +13,11 @@ set( GLFW_INSTALL OFF CACHE BOOL  "GLFW lib only" )
 SET( GCC_COVERAGE_COMPILE_FLAGS "-Wwrite-strings" )
 set( CMAKE_EXPORT_COMPILE_COMMANDS ON )
 
+set(GLFW_INSTALL ON)
 add_subdirectory( external/glfw )
 add_subdirectory( external/freetype )
-   
-add_library( Vizior STATIC )
-target_sources(Vizior 
-  PUBLIC
+
+set(exported_headers 
     ./include/Point2D.hpp 
     ./include/ImageBuilder.hpp 
     ./include/Window.hpp 
@@ -27,6 +26,11 @@ target_sources(Vizior
     ./include/Shaders.hpp 
     ./include/Camera.hpp 
     ./include/Vizior.hpp
+
+    )
+   
+add_library( Vizior STATIC )
+target_sources(Vizior 
   PRIVATE
     ./src/glad.c 
     ./src/Point2D.cpp 
@@ -39,9 +43,49 @@ target_sources(Vizior
     ./src/Camera.cpp 
     ./src/Vizior.cpp)
 
-target_include_directories( Vizior PUBLIC ./include PUBLIC external/glfw/include PUBLIC external/FreeType/include PUBLIC external )
+
+set(baseDir "$<IF:$<BOOL:$<INSTALL_INTERFACE:a>>,${CMAKE_INSTALL_INCLUDEDIR},${CMAKE_CURRENT_SOURCE_DIR}>")
+
+message(baseDir="${baseDir}")
+
+target_include_directories( Vizior 
+  PUBLIC 
+  ${baseDir}/include 
+  PUBLIC 
+  ${baseDir}/external/glfw/include 
+  ${baseDir}/external/FreeType/include 
+  ${baseDir}/external )
+
+include(GNUInstallDirs)
 target_link_libraries( Vizior ${OPENGL_LIBRARIES} glfw freetype )
 
+
+# "Local "build"
 add_executable( vzrSample WIN32 src/main.cpp)
 target_include_directories(vzrSample PUBLIC ./include)
 target_link_libraries(vzrSample Vizior)
+
+
+# Exportation for easy usage in other projects
+
+
+install(TARGETS Vizior
+        EXPORT ViziorTargets
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+        INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+)
+
+install(FILES ${exported_headers} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+install(FILES ./include/glad/glad.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/glad)
+install(FILES ./include/KHR/khrplatform.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/KHR)
+
+
+message(CMAKE_INSTALL_LIBDIR="${CMAKE_INSTALL_LIBDIR}")
+
+install(EXPORT ViziorTargets
+        FILE ViziorTargets.cmake
+        NAMESPACE Vizior::
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/Vizior
+)
