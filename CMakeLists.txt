@@ -30,6 +30,7 @@ set(exported_headers
     )
    
 add_library( Vizior STATIC )
+target_compile_options(Vizior PUBLIC -g)
 target_sources(Vizior 
   PRIVATE
     ./src/glad.c 
@@ -44,25 +45,24 @@ target_sources(Vizior
     ./src/Vizior.cpp)
 
 
-set(baseDir "$<IF:$<BOOL:$<INSTALL_INTERFACE:a>>,${CMAKE_INSTALL_INCLUDEDIR},${CMAKE_CURRENT_SOURCE_DIR}>")
 
-message(baseDir="${baseDir}")
 
 target_include_directories( Vizior 
   PUBLIC 
-  ${baseDir}/include 
-  PUBLIC 
-  ${baseDir}/external/glfw/include 
-  ${baseDir}/external/FreeType/include 
-  ${baseDir}/external )
+  "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
+  "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/Vizior>"
+  PRIVATE 
+  ./external/glfw/include 
+  ./external/FreeType/include 
+  ./external )
 
 include(GNUInstallDirs)
-target_link_libraries( Vizior ${OPENGL_LIBRARIES} glfw freetype )
+target_link_libraries( Vizior PUBLIC ${OPENGL_LIBRARIES} PUBLIC glfw freetype )
 
 
-# "Local "build"
+# Sample executable
 add_executable( vzrSample WIN32 src/main.cpp)
-target_include_directories(vzrSample PUBLIC ./include)
+target_include_directories(vzrSample PUBLIC ${baseDir}/include)
 target_link_libraries(vzrSample Vizior)
 
 
@@ -87,5 +87,18 @@ message(CMAKE_INSTALL_LIBDIR="${CMAKE_INSTALL_LIBDIR}")
 install(EXPORT ViziorTargets
         FILE ViziorTargets.cmake
         NAMESPACE Vizior::
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/Vizior
+)
+
+include(CMakePackageConfigHelpers)
+
+configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/CMake/Config.cmake.in
+  "${CMAKE_CURRENT_BINARY_DIR}/ViziorConfig.cmake"
+  INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/Vizior
+)
+
+install(FILES
+          "${CMAKE_CURRENT_BINARY_DIR}/ViziorConfig.cmake"
+        #  "${CMAKE_CURRENT_BINARY_DIR}/ViziorConfigVersion.cmake"
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/Vizior
 )
