@@ -8,7 +8,6 @@
 #include <cmath>
 #include <vector>
 #include <unistd.h> // for sleep
-#include <stb_image.h>
 #include "ImageBuilder.hpp"
 #include "Window.hpp"
 

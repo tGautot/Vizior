@@ -3,7 +3,6 @@
 
 #include <map>
 #include <utility> // for std::pair
-#include <freetype/freetype.h>
 #include <cstring>
 #include "Texture.hpp"
 
@@ -36,7 +35,6 @@ private:
     FontManager(const FontManager& o){}
 
     static FontManager* instance;
-    FT_Library ft;
     std::map<GlyphDescriptor, Glyph> glyphMap;
 };
 

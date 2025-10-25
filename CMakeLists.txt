@@ -77,9 +77,9 @@ install(TARGETS Vizior
         INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
 
-install(FILES ${exported_headers} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
-install(FILES ./include/glad/glad.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/glad)
-install(FILES ./include/KHR/khrplatform.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/KHR)
+install(FILES ${exported_headers} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/Vizior)
+install(FILES ./include/glad/glad.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/Vizior/glad)
+install(FILES ./include/KHR/khrplatform.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/Vizior/KHR)
 
 
 message(CMAKE_INSTALL_LIBDIR="${CMAKE_INSTALL_LIBDIR}")

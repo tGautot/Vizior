@@ -1,5 +1,6 @@
 #include "Vizior.hpp"
 #include <sys/time.h>
+#include <stb_image.h>
 
 namespace vzr {
 

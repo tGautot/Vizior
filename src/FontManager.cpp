@@ -1,5 +1,9 @@
 #include "FontManager.hpp"
 
+#include <freetype/freetype.h>
+
+static FT_Library ft;
+
 namespace vzr {
 
 FontManager* FontManager::instance = nullptr;
@@ -8,7 +12,7 @@ FontManager* FontManager::getInstance(){
     if(FontManager::instance == nullptr){
         FontManager::instance = new FontManager();
 
-        if (FT_Init_FreeType(&(instance->ft))) {
+        if (FT_Init_FreeType(&(ft))) {
             std::cout << "ERROR::FREETYPE: Could not init FreeType Library" << std::endl;
             return nullptr;
         }

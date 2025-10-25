@@ -1,5 +1,7 @@
 #include "Texture.hpp"
 
+#include <stb_image.h>
+
 namespace vzr {
 
 Texture* Texture::fromImage(const char* filepath){
