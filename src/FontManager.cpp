@@ -1,6 +1,7 @@
 #include "FontManager.hpp"
 
 #include <freetype/freetype.h>
+#include <iostream>
 
 static FT_Library ft;
 

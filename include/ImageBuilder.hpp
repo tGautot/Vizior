@@ -15,11 +15,10 @@
 
 #include <glad/glad.h>
 #include <math.h>
-#include <cstdint>
-#include <iostream>
 #include <string>
 #include <vector>
 
+#include "Common.hpp"
 #include "Point2D.hpp"
 #include "Texture.hpp"
 #include "FontManager.hpp"
@@ -30,14 +29,6 @@
 class Window;
 
 namespace vzr {
-
-    enum ANCHOR {
-        ANCHOR_TR, ANCHOR_TL, ANCHOR_BR, ANCHOR_BL, ANCHOR_C // Top-Bottom Left-Right Center
-    };
-
-    typedef struct {
-        uint8_t r, g, b, a;
-    } Color;
 
     typedef struct {
         GLenum mode;

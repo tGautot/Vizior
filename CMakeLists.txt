@@ -8,16 +8,16 @@ set( CMAKE_CXX_STANDARD 17 )
 
 include_directories( ${OPENGL_INCLUDE_DIRS} )
 
-set( GLFW_BUILD_DOCS OFF CACHE BOOL  "GLFW lib only" )
-set( GLFW_INSTALL OFF CACHE BOOL  "GLFW lib only" )
 SET( GCC_COVERAGE_COMPILE_FLAGS "-Wwrite-strings" )
 set( CMAKE_EXPORT_COMPILE_COMMANDS ON )
 
-set(GLFW_INSTALL ON)
+set( GLFW_BUILD_DOCS OFF CACHE BOOL  "GLFW lib only" )
+set( GLFW_INSTALL ON )
 add_subdirectory( external/glfw )
 add_subdirectory( external/freetype )
 
 set(exported_headers 
+    ./include/Common.hpp
     ./include/Point2D.hpp 
     ./include/ImageBuilder.hpp 
     ./include/Window.hpp 
@@ -62,7 +62,7 @@ target_link_libraries( Vizior PUBLIC ${OPENGL_LIBRARIES} PUBLIC glfw freetype )
 
 # Sample executable
 add_executable( vzrSample WIN32 src/main.cpp)
-target_include_directories(vzrSample PUBLIC ${baseDir}/include)
+target_include_directories(vzrSample PUBLIC ./include)
 target_link_libraries(vzrSample Vizior)
 
 

@@ -1,4 +1,5 @@
 #include "Window.hpp"
+#include "GLFW/glfw3.h"
 
 namespace vzr {
 
@@ -7,6 +8,10 @@ namespace vzr {
     Window* viziorWin = (Window*) (glfwGetWindowUserPointer(window));
     viziorWin->keyCallback(key, scancode, action, mods);
 }*/
+
+void glfw_error_callback(int c, const char* s){
+    std::cout << "GLFW ERROR " << c << ": " << s << std::endl;
+}
 
 void glfw_scroll_callback(GLFWwindow* window, double xscroll, double yscroll){
     std::cout << "GLFW SCROLL CALLBACK GOT YSCROLL " << yscroll << std::endl;
@@ -17,6 +22,7 @@ void glfw_scroll_callback(GLFWwindow* window, double xscroll, double yscroll){
 Window::Window(int w, int h, const char* name)
     : m_WinName(name), m_Width(w), m_Height(h), m_CameraEnabled(true) {
     /* Initialize the library */
+    glfwSetErrorCallback(glfw_error_callback);
     if (!glfwInit()){
         std::cout << "Failed glfwInit(), make sure that external/glfw is populated" << std::endl;
         exit(1);
@@ -32,6 +38,7 @@ Window::Window(int w, int h, const char* name)
     m_glfw_Window = glfwCreateWindow(m_Width, m_Height, name, NULL, NULL);
     if (!m_glfw_Window)
     {
+        std::cout << "Couldn't create window" << std::endl;
         glfwTerminate();
         exit(1);
     }

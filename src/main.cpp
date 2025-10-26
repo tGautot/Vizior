@@ -3,8 +3,10 @@
 #include <memory>
 #include <iostream>
 
+#include "Texture.hpp"
 #include "Vizior.hpp"
 #include "Window.hpp"
+#include "Common.hpp"
 
 std::shared_ptr<vzr::Window> win1 = NULL, win2 = NULL;
 std::shared_ptr<vzr::ImageBuilder> src1 = NULL, src2 = NULL;
@@ -77,7 +79,7 @@ void loop(int frameCount, double timestep){
 
 
 
-    /*src1->drawTriangle(t1, vzr::RED);
+    src1->drawTriangle(t1, vzr::RED);
     src1->drawTriangle(t2, vzr::BLU);
     src1->drawImage(vzr::ANCHOR_TL, center, containerImage, 200,200,0);
     for(int i = 0; i < 4; i++){
@@ -110,11 +112,21 @@ void loop(int frameCount, double timestep){
 
     if(win1->isKeyPressed(vzr::Key::KEY_Y)){
         src1->drawCircle(botl, 100, vzr::DRK_RED);
-    }*/
+    }
 
     vzr::Color grid[9] = {vzr::BLU, vzr::BLU, vzr::BLU, vzr::BLU, vzr::RED, vzr::BLU, vzr::BLU, vzr::BLU, vzr::BLU};
     src1->drawGrid(botl, 500, 500, grid, 3, 3);
 
+
+    vzr::Color myCols[100*100];
+    for(int i = 0; i < 100; i++){
+        for(int j = 0; j < 100; j++){
+            myCols[i*100 + j] = {static_cast<uint8_t>(255*i/100), 0, static_cast<uint8_t>(255*j/100), 255};
+        }
+    }
+    vzr::Texture* myTex = vzr::Texture::fromPixels(100, 100, myCols) ;
+    src1->drawImage(vzr::ANCHOR_TL, center, myTex, 100, 100, 0);
+    delete myTex;
 }
 
 int main(void)

@@ -1,4 +1,5 @@
 #include "Vizior.hpp"
+#include "Texture.hpp"
 #include <sys/time.h>
 #include <stb_image.h>
 
@@ -68,7 +69,9 @@ void Start(){
             if(windows[i] == NULL) continue;
             windows[i]->drawSource();
         }
+        Texture::cleanDanglingTextures();
     }
+    Texture::cleanDanglingTextures();
 }
 
 
