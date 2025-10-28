@@ -17,6 +17,7 @@
 #include <math.h>
 #include <string>
 #include <vector>
+#include <cstdint>
 
 #include "Common.hpp"
 #include "Point2D.hpp"
@@ -35,7 +36,8 @@ namespace vzr {
         int start, cnt;
         unsigned int size; // Used for points and lines
         unsigned int shdrProg; // Used for tex and later for custom shaders
-        Texture* texture;
+        int64_t tex_id; // Supposed to represent a GLid, which is unsigned int, here use sign to say if block uses tex or not
+        //Texture* texture;
     } ElementBlock;
 
 
@@ -98,7 +100,7 @@ namespace vzr {
         int addVert(int x, int y, Color& color);
         int addVert(int x, int y, float s, float t);
         int addVert(int x, int y, Color& color, float s, float t);
-        void addElementBlock(GLenum mode, int vertexCount, unsigned int size, unsigned int shdrProg, Texture* tex);
+        void addElementBlock(GLenum mode, int vertexCount, unsigned int size, unsigned int shdrProg, int64_t tex);
         // TODO Make it so people that know how to write shader can modify the shaders used
         void compileBaseShaders();
 

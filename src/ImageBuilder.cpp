@@ -115,20 +115,20 @@ int ImageBuilder::addVert(int x, int y, Color& color, float s, float t){
     return m_CurrElemID++;
 }
 
-void ImageBuilder::addElementBlock(GLenum mode, int elemCount, unsigned int size, unsigned int shdrProg, Texture* tex){
+void ImageBuilder::addElementBlock(GLenum mode, int elemCount, unsigned int size, unsigned int shdrProg, int64_t tex_id){
     if(size < 1) size = 1;
     if(m_ElemBlocks.size() == 0){
-        m_ElemBlocks.push_back({mode, 0, elemCount, size, shdrProg, tex});
+        m_ElemBlocks.push_back({mode, 0, elemCount, size, shdrProg, tex_id});
         return;
     }
     ElementBlock& lastBlock = m_ElemBlocks.back();
     GLenum lastMode = lastBlock.mode;
     if(lastMode == mode && (lastMode == GL_TRIANGLES || lastMode == GL_POINTS) && lastBlock.size == size 
-            && lastBlock.shdrProg == shdrProg && lastBlock.texture == tex){
+            && lastBlock.shdrProg == shdrProg && lastBlock.tex_id == tex_id){
         lastBlock.cnt += elemCount;
         return;
     }
-    m_ElemBlocks.push_back({mode, lastBlock.start + lastBlock.cnt, elemCount, size, shdrProg, tex});
+    m_ElemBlocks.push_back({mode, lastBlock.start + lastBlock.cnt, elemCount, size, shdrProg, tex_id});
 }
 
 void ImageBuilder::clearAll(){
@@ -142,7 +142,7 @@ void ImageBuilder::drawTriangle(Point2D* ps, Color& color){
     for(int i = 0; i < 3; i++){
         m_VertIdx.push_back(addVert(ps[i].x, ps[i].y, color));
     }
-    addElementBlock(GL_TRIANGLES, 3, 0.0f, m_BaseShdr->getId(), nullptr);
+    addElementBlock(GL_TRIANGLES, 3, 0.0f, m_BaseShdr->getId(), -1);
 }
 
 Point2D* getCornersOfRect(ANCHOR a, Point2D& anch, int w, int h, int rot){
@@ -151,10 +151,10 @@ Point2D* getCornersOfRect(ANCHOR a, Point2D& anch, int w, int h, int rot){
 
     switch(a){
         case ANCHOR_C:
-            *bl = Point2D(anch.x - w/2, anch.y - h/2);
-            *tl = Point2D(anch.x - w/2, anch.y + h/2);
-            *br = Point2D(anch.x + w/2, anch.y - h/2);
-            *tr = Point2D(anch.x + w/2, anch.y + h/2);
+            *bl = Point2D(anch.x - w/2.0f, anch.y - h/2.0f);
+            *tl = Point2D(anch.x - w/2.0f, anch.y + h/2.0f);
+            *br = Point2D(anch.x + w/2.0f, anch.y - h/2.0f);
+            *tr = Point2D(anch.x + w/2.0f, anch.y + h/2.0f);
             break;
         case ANCHOR_BL:
             *bl = Point2D(anch.x  , anch.y  );
@@ -208,7 +208,7 @@ void ImageBuilder::drawRect(ANCHOR a, Point2D& anch, int w, int h, float rot, Co
     PB(m_VertIdx, tlIdx);
 
 
-    addElementBlock(GL_TRIANGLE_STRIP, 6, 0.0f, m_BaseShdr->getId(), nullptr);
+    addElementBlock(GL_TRIANGLE_STRIP, 6, 0.0f, m_BaseShdr->getId(), -1);
 }
 
 void ImageBuilder::drawQuad(Point2D* pts, Color& col){
@@ -242,7 +242,7 @@ void ImageBuilder::drawGrid(Point2D& top_left, int width, int height, Color* col
         
     }
 
-    addElementBlock(GL_TRIANGLE_STRIP, m_VertIdx.size() - nElemsPre, 0.0f, m_BaseShdr->getId(), nullptr);
+    addElementBlock(GL_TRIANGLE_STRIP, m_VertIdx.size() - nElemsPre, 0.0f, m_BaseShdr->getId(), -1);
 
 }
 
@@ -250,7 +250,7 @@ void ImageBuilder::drawPolygon(Point2D* pts, int n, Color& col){
     for(int i = 0; i < n; i++){
         m_VertIdx.push_back(addVert(pts[i].x, pts[i].y, col));
     }
-    addElementBlock(GL_TRIANGLE_FAN, n, 0.0f, m_BaseShdr->getId(), nullptr);
+    addElementBlock(GL_TRIANGLE_FAN, n, 0.0f, m_BaseShdr->getId(), -1);
 }
 
 // TODO better ways to draw cricle probably
@@ -285,7 +285,7 @@ void ImageBuilder::drawEllipse(Point2D& center, int rx, int ry, int rot, Color& 
     PB(m_VertIdx, startElemId);
     PB(m_VertIdx, last);
     PB(m_VertIdx, first);
-    addElementBlock(GL_TRIANGLES, precision*3, 0.0f, m_BaseShdr->getId(), nullptr);
+    addElementBlock(GL_TRIANGLES, precision*3, 0.0f, m_BaseShdr->getId(), -1);
 
 }
 
@@ -312,7 +312,7 @@ void ImageBuilder::drawArc(Point2D& center, int r, int from, int to, Color& col)
             PB(m_VertIdx, last);
         } 
     }
-    addElementBlock(GL_TRIANGLES, tris*3, 0.0f, m_BaseShdr->getId(), nullptr);
+    addElementBlock(GL_TRIANGLES, tris*3, 0.0f, m_BaseShdr->getId(), -1);
 
 }
 
@@ -352,7 +352,7 @@ void ImageBuilder::drawRingArc(Point2D& center, int inR, int outR, int from, int
 
     }
     
-    addElementBlock(GL_TRIANGLES, precision*6, 0.0f, m_BaseShdr->getId(), nullptr);
+    addElementBlock(GL_TRIANGLES, precision*6, 0.0f, m_BaseShdr->getId(), -1);
 
 }
 
@@ -371,7 +371,7 @@ void ImageBuilder::drawLine(Point2D* ps, int w, Color& color){
     // Pure OpenGL line
     m_VertIdx.push_back(addVert(ps[0].x, ps[0].y, color));
     m_VertIdx.push_back(addVert(ps[1].x, ps[1].y, color));
-    addElementBlock(GL_LINE_STRIP, 2, w, m_BaseShdr->getId(), nullptr);
+    addElementBlock(GL_LINE_STRIP, 2, w, m_BaseShdr->getId(), -1);
 }
 
 void ImageBuilder::drawLine(Point2D* ps, int n, int w, Color& color, bool loop){
@@ -385,13 +385,13 @@ void ImageBuilder::drawLine(Point2D* ps, int n, int w, Color& color, bool loop){
     for(int i = 0; i < n; i++){
         m_VertIdx.push_back(addVert(ps[i].x, ps[i].y, color));
     }
-    addElementBlock(loop ? GL_LINE_LOOP : GL_LINE_STRIP, n, w, m_BaseShdr->getId(), nullptr);
+    addElementBlock(loop ? GL_LINE_LOOP : GL_LINE_STRIP, n, w, m_BaseShdr->getId(), -1);
 }
 
 
 void ImageBuilder::drawPoint(Point2D& pt, unsigned int sz, Color& color){
     m_VertIdx.push_back(addVert(pt.x, pt.y, color));
-    addElementBlock(GL_POINTS, 1, sz, m_BaseShdr->getId(), nullptr);
+    addElementBlock(GL_POINTS, 1, sz, m_BaseShdr->getId(), -1);
 }
 
 void ImageBuilder::drawImage(ANCHOR a, Point2D& anch, Texture* image, int w, int h, int rot){
@@ -412,7 +412,7 @@ void ImageBuilder::drawImage(ANCHOR a, Point2D& anch, Texture* image, int w, int
     PB(m_VertIdx, brIdx);
     PB(m_VertIdx, tlIdx);
 
-    addElementBlock(GL_TRIANGLE_STRIP, 6, 0.0f, m_TexShdr->getId(), image);
+    addElementBlock(GL_TRIANGLE_STRIP, 6, 0.0f, m_TexShdr->getId(), image->getID());
 }
 
 void ImageBuilder::drawText(ANCHOR a, Point2D& anch, std::string text, Color& col, const char* fontName, float scale, int rot){
@@ -451,7 +451,7 @@ void ImageBuilder::drawText(ANCHOR a, Point2D& anch, std::string text, Color& co
         PB(m_VertIdx, tlIdx);
 
 
-        addElementBlock(GL_TRIANGLE_STRIP, 6, 0.0f, m_GlyphShdr->getId(), glyph->tex);
+        addElementBlock(GL_TRIANGLE_STRIP, 6, 0.0f, m_GlyphShdr->getId(), glyph->tex->getID());
         
         // now advance cursors for next glyph (note that advance is number of 1/64 pixels)
         x += (glyph->advance >> 6) * scale; // bitshift by 6 to get value in pixels (2^6 = 64)
@@ -574,11 +574,11 @@ void ImageBuilder::submit(){
 
         }
 
-        if(block.texture == nullptr){
+        if(block.tex_id == -1){
             currWithTex = false;
         } else {
             currWithTex = true;
-            glBindTexture(GL_TEXTURE_2D, block.texture->getID());
+            glBindTexture(GL_TEXTURE_2D, block.tex_id);
         }
 
         if(block.mode == GL_LINES || block.mode == GL_LINE_STRIP || block.mode == GL_LINE_LOOP){
