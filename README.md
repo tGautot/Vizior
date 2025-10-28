@@ -1,35 +1,28 @@
 # Vizior - A simple 2D renderer for basic graphics
 
-The goal of vizior is to bring to C++ the experience of using [p5js](https://p5js.org/) by providing simple funtions to draw shapes, lines, points, text, and sprites to a window.
+The goal of Vizior is to bring to C++ the experience of using [p5js](https://p5js.org/) by providing simple funtions to draw shapes, lines, points, text, and sprites to a window.
+Bring visuals to your apps with a small library and just a few lines of code.
 
-## TODO
+## How to install
 
- - [x] Handle multiple windows
- - [x] Make it cpp  (classes)
- - [x] Make Loop
- - [x] Draw lines
- - [x] Draw Points
- - [x] Draw Sprite
- - [x] Draw Text
- - [x] Draw Arc
- - [x] Draw Elipse
- - [x] Draw Quad
- - [x] Draw Polygon
- - [x] Draw Ring
- - [x] Draw Ring Arc
- - [x] Draw bezier curves
- - [ ] Draw only outline of shapes
+1. Make sure you have cloned the repository recursively (`git clone --recursive ...`)
+2. Run the following commands to build and install the library
+```sh
+mkdir build
+cd build
+cmake ..
+cmake --build .
+sudo cmake --install .
+```
+3. Vizior should now be ready system wide, see this [sample project(TODO)] for an example on how to use the library 
+
+
+## Features on the Todo-List
+
  - [ ] Add a UI mode (where coord are screen, not world)
- - [x] Make it possible to change size of imagebuilder's arrays
- - [ ] Triangulation for polygon
- - [x] Enable alpha channel
- - [ ] Continuous integration
- - [x] Simple camera
- - [x] Camera rotation
  - [ ] Make camera optional
- - [x] Pipe Inputs (keyboard)
- - [x] Pipe Inputs (clicks)
- - [x] Set background color
- - [ ] Set repeatable sprite for background
+ - [ ] 3d API
+
+### Maybe some-day
  - [ ] ?Custom Shaders?
- - [ ] Optimizations?
+ - [ ] Triangulation for polygon (non-convex-hull)
