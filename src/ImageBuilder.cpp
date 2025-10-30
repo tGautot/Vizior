@@ -222,7 +222,7 @@ void ImageBuilder::drawGrid(Point2D& top_left, int width, int height, Color* col
     for(int i = 0; i < rows; i++){
         gridVertIds[i].resize(cols);
         for(int j = 0; j < cols; j++){
-            gridVertIds[i][j] = addVert(top_left.x + j*width/cols, top_left.y + i*height/rows, colors[i*cols + j]);
+            gridVertIds[i][j] = addVert(top_left.x + (1.0f*j*width)/cols, top_left.y + (1.0f*i*height)/rows, colors[i*cols + j]);
         }
     }
 
@@ -547,15 +547,6 @@ void ImageBuilder::submit(){
     float camZoom = m_Camera->getZoom();
     int vertSpaceLoc = glGetUniformLocation(currProgram, "vertSpace");
     glUniform2f(vertSpaceLoc, m_Width/camZoom, m_Height/camZoom);
-
-    std::cout << "Camera at pos " << m_Camera->getPos().x << "," << m_Camera->getPos().y << " z-rot " << m_Camera->getRotZ() << " zoomf " << camZoom << std::endl; 
-    std::cout << "View Mat: " << std::endl;
-    for(int i = 0; i < 4; i++){
-        for(int j = 0; j < 4; j++){
-            std::cout << viewMat[i*4+j] <<  " ";
-        }
-        std::cout << std::endl;
-    }
 
     for(int i = 0; i < nBlock; i++){
         ElementBlock& block = m_ElemBlocks[i];

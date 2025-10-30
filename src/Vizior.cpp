@@ -29,13 +29,11 @@ void setLoopFunc(loop_func f){
 
 bool shoudKeepLooping(){
     int sz = windows.size();
-    std::cout << "Found n windows: " << sz << std::endl;
     if(sz == 0) return false;
 
     bool should = true;
     for(int i = 0; i < sz; i++){
         should = should && !windows[i]->shouldClose();
-        std::cout << "Should close after window " << i << !windows[i]->shouldClose() << std::endl;
     }
     return should;
 }
@@ -55,8 +53,6 @@ void Start(){
     double delta = 1.0/targetFrameRate;
     double framestt = 0;
     while(shoudKeepLooping()){
-        std::cout << "Looping " << fc << std::endl;
-        
         double time = getTimeSec();
         if(framestt > 0.1){ 
             delta = time - framestt;

@@ -46,6 +46,9 @@ Window::Window(int w, int h, const char* name)
     /* Make the window's context current */
     glfwMakeContextCurrent(m_glfw_Window);
 
+    // Force VSync
+    glfwSwapInterval(1);
+
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
         std::cout << "Failed to initialize GLAD" << std::endl;

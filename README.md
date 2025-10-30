@@ -19,9 +19,11 @@ sudo cmake --install .
 
 ## Features on the Todo-List
 
- - [ ] Add a UI mode (where coord are screen, not world)
  - [ ] Make camera optional
+ - [ ] Add a UI mode (where coord are screen, not world)
  - [ ] 3d API
+ - [ ] Record image being drawn
+ - [ ] Record video (would probably need ffmpeg so ideally optional at build-time )
 
 ### Maybe some-day
  - [ ] ?Custom Shaders?
