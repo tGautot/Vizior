@@ -94,16 +94,16 @@ ImageBuilder::~ImageBuilder(){
     delete m_GlyphShdr;
 }
 
-int ImageBuilder::addVert(int x, int y, Color& color){
+int ImageBuilder::addVert(double x, double y, Color& color){
     return addVert(x,y,color,0.0f,0.0f);
 }
 
 Color nilColor = {0,0,0,0};
-int ImageBuilder::addVert(int x, int y, float s, float t){
+int ImageBuilder::addVert(double x, double y, float s, float t){
     return addVert(x,y,nilColor,s,t);
 }
 
-int ImageBuilder::addVert(int x, int y, Color& color, float s, float t){
+int ImageBuilder::addVert(double x, double y, Color& color, float s, float t){
     PB(m_Verts, (1.0f * x));
     PB(m_Verts, (1.0f * y));
     PB(m_Verts, color.r/255.0);
@@ -145,8 +145,7 @@ void ImageBuilder::drawTriangle(Point2D* ps, Color& color){
     addElementBlock(GL_TRIANGLES, 3, 0.0f, m_BaseShdr->getId(), -1);
 }
 
-Point2D* getCornersOfRect(ANCHOR a, Point2D& anch, int w, int h, int rot){
-    Point2D* corners = new Point2D[4]; 
+void getCornersOfRect(ANCHOR a, Point2D& anch, int w, int h, double rot, Point2D corners[4]){
     Point2D *bl = corners, *tl = corners+1 , *br = corners+2, *tr = corners+3;
 
     switch(a){
@@ -182,23 +181,21 @@ Point2D* getCornersOfRect(ANCHOR a, Point2D& anch, int w, int h, int rot){
             break;
     }
 
-    *bl = bl->rotateAroundBy(anch, rot);
-    *tl = tl->rotateAroundBy(anch, rot);
-    *br = br->rotateAroundBy(anch, rot);
-    *tr = tr->rotateAroundBy(anch, rot);
-    return corners;
+    bl->rotateAroundBy(anch, rot);
+    tl->rotateAroundBy(anch, rot);
+    br->rotateAroundBy(anch, rot);
+    tr->rotateAroundBy(anch, rot);
 }
 
-void ImageBuilder::drawRect(ANCHOR a, Point2D& anch, int w, int h, float rot, Color& color){
-    Point2D* corners = getCornersOfRect(a, anch, w, h, rot);
+void ImageBuilder::drawRect(ANCHOR a, Point2D& anch, int w, int h, double rot, Color& color){
+    Point2D corners[4];
+    getCornersOfRect(a, anch, w, h, rot, corners);
     Point2D bl = corners[0], tl = corners[1], br = corners[2], tr = corners[3];
 
     int blIdx = addVert(bl.x, bl.y, color); 
     int tlIdx = addVert(tl.x, tl.y, color); 
     int brIdx = addVert(br.x, br.y, color); 
     int trIdx = addVert(tr.x, tr.y, color); 
-
-    delete[] corners;
     
     PB(m_VertIdx, blIdx);
     PB(m_VertIdx, tlIdx);
@@ -271,7 +268,7 @@ void ImageBuilder::drawEllipse(Point2D& center, int rx, int ry, int rot, Color& 
         int px = center.x + cos(M_PI * i*2 / precision) * rx;
         int py = center.y + sin(M_PI * i*2 / precision) * ry;
         edgePt = {px, py};
-        edgePt = edgePt.rotateAroundBy(center, rot);
+        edgePt.rotateAroundBy(center, rot);
         beforeLast = last;
         last = addVert(edgePt.x, edgePt.y, color);
         if(i >= 1){
@@ -357,35 +354,34 @@ void ImageBuilder::drawRingArc(Point2D& center, int inR, int outR, int from, int
 }
 
 
-void ImageBuilder::drawLine(Point2D* ps, int w, Color& color){
-    if(w > m_LineWidthRange[1]){
-        // Requested line width is too high for GPU, simulate it with rectangle
-        Point2D center = (ps[0] + ps[1])/2;
-        Point2D orientation = ps[1] - ps[0];
-        float angle = 180 * atan2(orientation.y, orientation.x) / M_PI;
-        
-        int length = sqrt(orientation.x*orientation.x + orientation.y*orientation.y);
-        drawRect(ANCHOR_C, center, length, w, angle, color);
+void ImageBuilder::drawLine(const std::vector<Point2D>& ps, int w, Color& col, bool loop){
+    if(ps.size() == 1){
+        std::cout << "ERROR::DRAW_LINE Only one point was given, not enough for a line " << std::endl; 
         return;
     }
-    // Pure OpenGL line
-    m_VertIdx.push_back(addVert(ps[0].x, ps[0].y, color));
-    m_VertIdx.push_back(addVert(ps[1].x, ps[1].y, color));
-    addElementBlock(GL_LINE_STRIP, 2, w, m_BaseShdr->getId(), -1);
-}
-
-void ImageBuilder::drawLine(Point2D* ps, int n, int w, Color& color, bool loop){
-    if(w > m_LineWidthRange[1]){
+    if(w > m_LineWidthRange[1]) {
+        if(ps.size() == 2){
+            // Requested line width is too high for GPU, simulate it with rectangle
+            Point2D center = (ps[0] + ps[1])/2;
+            Point2D orientation = ps[1] - ps[0];
+            float angle = std::atan2(orientation.y, orientation.x);
+            
+            int length = std::sqrt(orientation.x*orientation.x + orientation.y*orientation.y);
+            drawRect(ANCHOR_C, center, length, w, angle, col);
+            return;
+        }
         // Requested line width is too high for GPU
         // Since its a strip, cant really do rectangle
         std::cout << "ERROR::DRAW_LINE(n>2)::Width too big, max is " << m_LineWidthRange[1] << std::endl; 
         return;
     }
+    
+    // n > 2 
     // Pure OpenGL line
-    for(int i = 0; i < n; i++){
-        m_VertIdx.push_back(addVert(ps[i].x, ps[i].y, color));
+    for(int i = 0; i < ps.size(); i++){
+        m_VertIdx.push_back(addVert(ps[i].x, ps[i].y, col));
     }
-    addElementBlock(loop ? GL_LINE_LOOP : GL_LINE_STRIP, n, w, m_BaseShdr->getId(), -1);
+    addElementBlock(loop ? GL_LINE_LOOP : GL_LINE_STRIP, ps.size(), w, m_BaseShdr->getId(), -1);
 }
 
 
@@ -394,16 +390,15 @@ void ImageBuilder::drawPoint(Point2D& pt, unsigned int sz, Color& color){
     addElementBlock(GL_POINTS, 1, sz, m_BaseShdr->getId(), -1);
 }
 
-void ImageBuilder::drawImage(ANCHOR a, Point2D& anch, Texture* image, int w, int h, int rot){
-    Point2D* corners = getCornersOfRect(a, anch, w, h, rot);
+void ImageBuilder::drawImage(ANCHOR a, Point2D& anch, Texture* image, int w, int h, double rot){
+    Point2D corners[4];
+    getCornersOfRect(a, anch, w, h, rot, corners);
     Point2D bl = corners[0], tl = corners[1], br = corners[2], tr = corners[3];
 
     int blIdx = addVert(bl.x, bl.y, 0.0f, 0.0f); 
     int tlIdx = addVert(tl.x, tl.y, 0.0f, 1.0f); 
     int brIdx = addVert(br.x, br.y, 1.0f, 0.0f); 
     int trIdx = addVert(tr.x, tr.y, 1.0f, 1.0f); 
-
-    delete[] corners;
 
     PB(m_VertIdx, blIdx);
     PB(m_VertIdx, tlIdx);
@@ -415,14 +410,14 @@ void ImageBuilder::drawImage(ANCHOR a, Point2D& anch, Texture* image, int w, int
     addElementBlock(GL_TRIANGLE_STRIP, 6, 0.0f, m_TexShdr->getId(), image->getID());
 }
 
-void ImageBuilder::drawText(ANCHOR a, Point2D& anch, std::string text, Color& col, const char* fontName, float scale, int rot){
+void ImageBuilder::drawText(ANCHOR a, Point2D& anch, std::string text, Color& col, const char* fontName, float scale, double rot){
     // Code mostly copied from https://learnopengl.com/In-Practice/Text-Rendering
 
     // iterate through all characters
     std::string::const_iterator c;
     int x = anch.x, y = anch.y, blIdx, tlIdx, brIdx, trIdx;
     Point2D bl, tl, br, tr, nxtPos;
-    Point2D* corners;
+    Point2D corners[4];
     for (c = text.begin(); c != text.end(); c++)
     {
         Glyph* glyph = m_FontManager->getGlyph(*c, fontName);
@@ -433,15 +428,13 @@ void ImageBuilder::drawText(ANCHOR a, Point2D& anch, std::string text, Color& co
         int w = (int)(glyph->w * scale);
         int h = (int)(glyph->h * scale);
         nxtPos = {xpos, ypos};
-        corners = getCornersOfRect(ANCHOR_BL, nxtPos, w, h, rot);
+        getCornersOfRect(a, anch, w, h, rot, corners);
         bl = corners[0], tl = corners[1], br = corners[2], tr = corners[3];
 
         blIdx = addVert(bl.x, bl.y, col, 0.0f, 1.0f); 
         tlIdx = addVert(tl.x, tl.y, col, 0.0f, 0.0f); 
         brIdx = addVert(br.x, br.y, col, 1.0f, 1.0f); 
         trIdx = addVert(tr.x, tr.y, col, 1.0f, 0.0f); 
-
-        delete[] corners;
 
         PB(m_VertIdx, blIdx);
         PB(m_VertIdx, tlIdx);
@@ -468,7 +461,7 @@ void ImageBuilder::drawBezier(Point2D& p1, Point2D& p2, Point2D& c1, Point2D& c2
     Point2D t1, t2, t3, dirt1, dirt2;
     Point2D f1, f2, dirf;
     int arrSize = precision; // Not all will be used
-    Point2D pms[arrSize];
+    std::vector<Point2D> pms(arrSize);
     int vertCount = 0;
     float i;
     for(int perc = 0; perc <= precision; perc+=step){
@@ -484,7 +477,7 @@ void ImageBuilder::drawBezier(Point2D& p1, Point2D& p2, Point2D& c1, Point2D& c2
         pms[vertCount] = f1+dirf*i;
         vertCount++;
     }
-    drawLine(pms, vertCount, 1, col, false);
+    drawLine(pms, 1, col, false);
 }
 
 

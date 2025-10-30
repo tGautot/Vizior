@@ -19,27 +19,29 @@ namespace vzr {
     class Point2D {
     public:
         Point2D();
+        Point2D(const Point2D& p);
         Point2D(int x, int y);
-        Point2D(float x, float y);
+        Point2D(double x, double y);
         ~Point2D();
-        Point2D rotateAroundBy(const Point2D& around, float ang);
-        float len();
-        float distTo(const Point2D& o);
+        void rotateAroundBy(const Point2D& around, double ang);
+        Point2D rotatedAroundBy(const Point2D& around, double ang);
+        double len();
+        double distTo(const Point2D& o);
 
         Point2D& operator+=(const Point2D& rhs);
         Point2D& operator-=(const Point2D& rhs);
         Point2D& operator*=(int rhs);
         Point2D& operator/=(int rhs);
-        Point2D& operator*=(float rhs);
-        Point2D& operator/=(float rhs);
-        friend Point2D operator+(Point2D lhs, const Point2D& rhs);
-        friend Point2D operator-(Point2D lhs, const Point2D& rhs);
-        friend Point2D operator*(Point2D lhs, int rhs);
-        friend Point2D operator/(Point2D lhs, int rhs);
-        friend Point2D operator*(Point2D lhs, float rhs);
-        friend Point2D operator/(Point2D lhs, float rhs);
+        Point2D& operator*=(double rhs);
+        Point2D& operator/=(double rhs);
+        friend Point2D operator+(const Point2D& lhs, const Point2D& rhs);
+        friend Point2D operator-(const Point2D& lhs, const Point2D& rhs);
+        friend Point2D operator*(const Point2D& lhs, int rhs);
+        friend Point2D operator/(const Point2D& lhs, int rhs);
+        friend Point2D operator*(const Point2D& lhs, double rhs);
+        friend Point2D operator/(const Point2D& lhs, double rhs);
         
-        float x,y;    
+        double x,y;    
     };
     extern const Point2D ORIGIN;
 }

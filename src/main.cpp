@@ -26,7 +26,7 @@ vzr::Point2D newCirclePos;
 
 
 void loop(int frameCount, double timestep){
-    std::cout << frameCount << std::endl;
+    //std::cout << frameCount << std::endl;
     
 
     vzr::Point2D center = {400,300};
@@ -45,7 +45,7 @@ void loop(int frameCount, double timestep){
         {800,600}, {800,1}, {1,600}
     };
     
-    vzr::Point2D l[4][2] = {
+    std::vector<vzr::Point2D> l[4] = {
         {center, topr},
         {center, topl},
         {center, botr},
@@ -62,7 +62,7 @@ void loop(int frameCount, double timestep){
     };
 
     vzr::Color prl = {127,0,255,255};
-    vzr::Point2D spiral[4*5];
+    std::vector<vzr::Point2D> spiral(4*5);
     for (int i = 0; i < 5; i++){
         spiral[i*4+0]= {10+i*40,10+i*30};
         spiral[i*4+1]= {800-(10+i*40),10+i*30};
@@ -89,11 +89,11 @@ void loop(int frameCount, double timestep){
     src1->drawCircle(center,10, PNK);
     src1->drawPoint(pt, 100, PNK);
     src1->drawText(vzr::ANCHOR_BL,other,"The quick brown fox", vzr::WHT, fontName, 1, 0);
-    src1->drawLine(spiral, 20, 5, prl, false);
+    src1->drawLine(spiral, 5, prl, false);
     src1->drawPolygon(poly, 5, CYN);
     src1->drawArc(center, 100,33,133,vzr::ORG);
     src1->drawRing(center, 135,155, vzr::CYN);
-    std::cout << "Got here" << std::endl;
+    //std::cout << "Got here" << std::endl;
     src1->drawRingArc(center, 155,175, 45,225, vzr::DRK_RED);
     src1->drawEllipse(topr, 150,100,135,vzr::SKY_BLU);
     //src2->drawTriangle(t1, vzr::BLU);

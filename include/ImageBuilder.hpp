@@ -68,7 +68,7 @@ namespace vzr {
         void clearAll();
 
         void drawTriangle(Point2D*, Color&);
-        void drawRect(ANCHOR, Point2D& anch, int w, int h, float rot, Color&);
+        void drawRect(ANCHOR, Point2D& anch, int w, int h, double rot, Color&);
         void drawQuad(Point2D* pts, Color&);
         void drawGrid(Point2D& top_left, int width, int height, Color* colors, int rows, int cols);
         // Draws the convex hull defined by the n points
@@ -79,11 +79,10 @@ namespace vzr {
         void drawRing(Point2D& center, int inR, int outR, Color&);
         void drawArc(Point2D& center, int r, int from, int to, Color&);
         void drawRingArc(Point2D& center, int inR, int outR, int from, int to, Color&);
-        void drawLine(Point2D*, int w, Color&);
-        void drawLine(Point2D*, int n, int w, Color&, bool loop);
+        void drawLine(const std::vector<Point2D>& points, int w, Color& col, bool loop = false);
         void drawPoint(Point2D& point, unsigned int sz, Color&);
-        void drawImage(ANCHOR, Point2D& anch, Texture* image, int w, int h, int rot);
-        void drawText(ANCHOR, Point2D& anch, std::string text, Color& col, const char* fontName, float scale, int rot);
+        void drawImage(ANCHOR, Point2D& anch, Texture* image, int w, int h, double rot);
+        void drawText(ANCHOR, Point2D& anch, std::string text, Color& col, const char* fontName, float scale, double rot);
         void drawBezier(Point2D& p1, Point2D& p2, Point2D& c1, Point2D& c2, Color& col);
 
         Color getBackgroundColor(){return m_BgColor;}
@@ -97,9 +96,9 @@ namespace vzr {
 
         void submit();
 
-        int addVert(int x, int y, Color& color);
-        int addVert(int x, int y, float s, float t);
-        int addVert(int x, int y, Color& color, float s, float t);
+        int addVert(double x, double y, Color& color);
+        int addVert(double x, double y, float s, float t);
+        int addVert(double x, double y, Color& color, float s, float t);
         void addElementBlock(GLenum mode, int vertexCount, unsigned int size, unsigned int shdrProg, int64_t tex);
         // TODO Make it so people that know how to write shader can modify the shaders used
         void compileBaseShaders();
