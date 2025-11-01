@@ -94,7 +94,7 @@ ImageBuilder::~ImageBuilder(){
     delete m_GlyphShdr;
 }
 
-int ImageBuilder::addVert(double x, double y, Color& color){
+int ImageBuilder::addVert(double x, double y, const Color& color){
     return addVert(x,y,color,0.0f,0.0f);
 }
 
@@ -103,9 +103,9 @@ int ImageBuilder::addVert(double x, double y, float s, float t){
     return addVert(x,y,nilColor,s,t);
 }
 
-int ImageBuilder::addVert(double x, double y, Color& color, float s, float t){
-    PB(m_Verts, (1.0f * x));
-    PB(m_Verts, (1.0f * y));
+int ImageBuilder::addVert(double x, double y, const Color& color, float s, float t){
+    PB(m_Verts, x);
+    PB(m_Verts, y);
     PB(m_Verts, color.r/255.0);
     PB(m_Verts, color.g/255.0);
     PB(m_Verts, color.b/255.0);
@@ -115,7 +115,7 @@ int ImageBuilder::addVert(double x, double y, Color& color, float s, float t){
     return m_CurrElemID++;
 }
 
-void ImageBuilder::addElementBlock(GLenum mode, int elemCount, unsigned int size, unsigned int shdrProg, int64_t tex_id){
+void ImageBuilder::addElementBlock(GLenum mode, int elemCount, double size, unsigned int shdrProg, int64_t tex_id){
     if(size < 1) size = 1;
     if(m_ElemBlocks.size() == 0){
         m_ElemBlocks.push_back({mode, 0, elemCount, size, shdrProg, tex_id});
@@ -138,14 +138,33 @@ void ImageBuilder::clearAll(){
     m_VertIdx.clear();
 }
 
-void ImageBuilder::drawTriangle(Point2D* ps, Color& color){
+void ImageBuilder::drawTriangle(const std::vector<Point2D>& ps, const Color& color){
+    if(ps.size() < 3){
+        std::cout << "WARNING::DRAW_TRANGLE Need at least 3 points but only " << ps.size() << " given, skipping..." << std::endl; 
+        return;
+    }
     for(int i = 0; i < 3; i++){
         m_VertIdx.push_back(addVert(ps[i].x, ps[i].y, color));
     }
     addElementBlock(GL_TRIANGLES, 3, 0.0f, m_BaseShdr->getId(), -1);
 }
 
-void getCornersOfRect(ANCHOR a, Point2D& anch, int w, int h, double rot, Point2D corners[4]){
+void ImageBuilder::drawTriangle(const std::vector<Point2D>& ps, const std::vector<Color>& colors){
+    if(ps.size() < 3){
+        std::cout << "WARNING::DRAW_TRANGLE Need at least 3 points but only " << ps.size() << " given, skipping..." << std::endl; 
+        return;
+    }
+    if(colors.size() < 3){
+        std::cout << "WARNING::DRAW_TRANGLE Need at least 3 colors but only " << colors.size() << " given, skipping..." << std::endl; 
+        return;
+    }
+    for(int i = 0; i < 3; i++){
+        m_VertIdx.push_back(addVert(ps[i].x, ps[i].y, colors[i]));
+    }
+    addElementBlock(GL_TRIANGLES, 3, 0.0f, m_BaseShdr->getId(), -1);
+}
+
+void getCornersOfRect(ANCHOR a, const Point2D& anch, double w, double h, double rot, Point2D corners[4]){
     Point2D *bl = corners, *tl = corners+1 , *br = corners+2, *tr = corners+3;
 
     switch(a){
@@ -187,7 +206,7 @@ void getCornersOfRect(ANCHOR a, Point2D& anch, int w, int h, double rot, Point2D
     tr->rotateAroundBy(anch, rot);
 }
 
-void ImageBuilder::drawRect(ANCHOR a, Point2D& anch, int w, int h, double rot, Color& color){
+void ImageBuilder::drawRect(ANCHOR a, const Point2D& anch, double w, double h, double rot, const Color& color){
     Point2D corners[4];
     getCornersOfRect(a, anch, w, h, rot, corners);
     Point2D bl = corners[0], tl = corners[1], br = corners[2], tr = corners[3];
@@ -208,11 +227,15 @@ void ImageBuilder::drawRect(ANCHOR a, Point2D& anch, int w, int h, double rot, C
     addElementBlock(GL_TRIANGLE_STRIP, 6, 0.0f, m_BaseShdr->getId(), -1);
 }
 
-void ImageBuilder::drawQuad(Point2D* pts, Color& col){
-    drawPolygon(pts, 4, col);
+void ImageBuilder::drawQuad(const std::vector<Point2D>& pts, const Color& col){
+    if(pts.size() < 4){
+        std::cout << "WARNING::DRAW_QUAD Need at least 4 points but only " << pts.size() << " given, skipping..." << std::endl; 
+        return;
+    }
+    drawPolygon(pts, col);
 }
 
-void ImageBuilder::drawGrid(Point2D& top_left, int width, int height, Color* colors, int rows, int cols){
+void ImageBuilder::drawGrid(const Point2D& top_left, double width, double height, Color* colors, int rows, int cols){
     // There are nrows of point, but that means n-1 "Lines" of triangle strips
     std::vector<std::vector<int>> gridVertIds;
     gridVertIds.resize(rows);
@@ -243,19 +266,23 @@ void ImageBuilder::drawGrid(Point2D& top_left, int width, int height, Color* col
 
 }
 
-void ImageBuilder::drawPolygon(Point2D* pts, int n, Color& col){
-    for(int i = 0; i < n; i++){
+void ImageBuilder::drawPolygon(const std::vector<Point2D>&  pts, const Color& col){
+    if(pts.size() < 3){
+        std::cout << "WARNING::DRAW_POLYGON Need at least 3 points but only " << pts.size() << " given, skipping..." << std::endl; 
+        return;
+    }
+    for(int i = 0; i < pts.size(); i++){
         m_VertIdx.push_back(addVert(pts[i].x, pts[i].y, col));
     }
-    addElementBlock(GL_TRIANGLE_FAN, n, 0.0f, m_BaseShdr->getId(), -1);
+    addElementBlock(GL_TRIANGLE_FAN, pts.size(), 0.0f, m_BaseShdr->getId(), -1);
 }
 
 // TODO better ways to draw cricle probably
-void ImageBuilder::drawCircle(Point2D& center, int r, Color& color){
+void ImageBuilder::drawCircle(const Point2D& center, double r, const Color& color){
     drawEllipse(center, r, r, 0, color);
 }
 
-void ImageBuilder::drawEllipse(Point2D& center, int rx, int ry, int rot, Color& color){
+void ImageBuilder::drawEllipse(const Point2D& center, double rx, double ry, double rot, const Color& color){
     // Center point
     int startElemId = addVert(center.x, center.y, color);
 
@@ -287,7 +314,7 @@ void ImageBuilder::drawEllipse(Point2D& center, int rx, int ry, int rot, Color& 
 }
 
 
-void ImageBuilder::drawArc(Point2D& center, int r, int from, int to, Color& col){
+void ImageBuilder::drawArc(const Point2D& center, double r, double from, double to, const Color& col){
     if(to < from){
         int tmp = from; from = to; to = tmp;
     }
@@ -313,11 +340,11 @@ void ImageBuilder::drawArc(Point2D& center, int r, int from, int to, Color& col)
 
 }
 
-void ImageBuilder::drawRing(Point2D& center, int inR, int outR, Color& color){
+void ImageBuilder::drawRing(const Point2D& center, double inR, double outR, const Color& color){
     drawRingArc(center, inR, outR, 0,360, color);
 }
 
-void ImageBuilder::drawRingArc(Point2D& center, int inR, int outR, int from, int to, Color& color){
+void ImageBuilder::drawRingArc(const Point2D& center, double inR, double outR, double from, double to, const Color& color){
     int precision = to-from;
     int outEID[precision], inEID[precision];
 
@@ -354,7 +381,7 @@ void ImageBuilder::drawRingArc(Point2D& center, int inR, int outR, int from, int
 }
 
 
-void ImageBuilder::drawLine(const std::vector<Point2D>& ps, int w, Color& col, bool loop){
+void ImageBuilder::drawLine(const std::vector<Point2D>& ps, double w, const Color& col, bool loop){
     if(ps.size() == 1){
         std::cout << "ERROR::DRAW_LINE Only one point was given, not enough for a line " << std::endl; 
         return;
@@ -385,12 +412,12 @@ void ImageBuilder::drawLine(const std::vector<Point2D>& ps, int w, Color& col, b
 }
 
 
-void ImageBuilder::drawPoint(Point2D& pt, unsigned int sz, Color& color){
+void ImageBuilder::drawPoint(const Point2D& pt, double sz, const Color& color){
     m_VertIdx.push_back(addVert(pt.x, pt.y, color));
     addElementBlock(GL_POINTS, 1, sz, m_BaseShdr->getId(), -1);
 }
 
-void ImageBuilder::drawImage(ANCHOR a, Point2D& anch, Texture* image, int w, int h, double rot){
+void ImageBuilder::drawImage(ANCHOR a, const Point2D& anch, Texture* image, double w, double h, double rot){
     Point2D corners[4];
     getCornersOfRect(a, anch, w, h, rot, corners);
     Point2D bl = corners[0], tl = corners[1], br = corners[2], tr = corners[3];
@@ -410,8 +437,8 @@ void ImageBuilder::drawImage(ANCHOR a, Point2D& anch, Texture* image, int w, int
     addElementBlock(GL_TRIANGLE_STRIP, 6, 0.0f, m_TexShdr->getId(), image->getID());
 }
 
-void ImageBuilder::drawText(ANCHOR a, Point2D& anch, std::string text, Color& col, const char* fontName, float scale, double rot){
-    // Code mostly copied from https://learnopengl.com/In-Practice/Text-Rendering
+void ImageBuilder::drawText(ANCHOR a, const Point2D& anch, const std::string& text, const Color& col, const char* fontName, double scale, double rot){
+    // Great place to understand the following code: https://learnopengl.com/In-Practice/Text-Rendering
 
     // iterate through all characters
     std::string::const_iterator c;
@@ -451,7 +478,7 @@ void ImageBuilder::drawText(ANCHOR a, Point2D& anch, std::string text, Color& co
     }
 }
 
-void ImageBuilder::drawBezier(Point2D& p1, Point2D& p2, Point2D& c1, Point2D& c2, Color& col){
+void ImageBuilder::drawBezier(const Point2D& p1, const Point2D& p2, const Point2D& c1, const Point2D& c2, const Color& col){
     int precision = 1000;
     int step = 40; // in per/thousand (precision)
     Point2D dir1 = c1 - p1;

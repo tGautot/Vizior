@@ -43,7 +43,12 @@ namespace vzr {
         
         double x,y;    
     };
+    
     extern const Point2D ORIGIN;
+
+    typedef Point2D Vec2;
 }
+
+
 
 #endif

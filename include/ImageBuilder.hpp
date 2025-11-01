@@ -34,7 +34,7 @@ namespace vzr {
     typedef struct {
         GLenum mode;
         int start, cnt;
-        unsigned int size; // Used for points and lines
+        double size; // Used for points and lines
         unsigned int shdrProg; // Used for tex and later for custom shaders
         int64_t tex_id; // Supposed to represent a GLid, which is unsigned int, here use sign to say if block uses tex or not
         //Texture* texture;
@@ -67,23 +67,38 @@ namespace vzr {
 
         void clearAll();
 
-        void drawTriangle(Point2D*, Color&);
-        void drawRect(ANCHOR, Point2D& anch, int w, int h, double rot, Color&);
-        void drawQuad(Point2D* pts, Color&);
-        void drawGrid(Point2D& top_left, int width, int height, Color* colors, int rows, int cols);
+        void drawTriangle(const std::vector<Point2D>& points, const Color& color);
+        void drawTriangle(const std::vector<Point2D>& points, const std::vector<Color>& colors);
+        
+        void drawRect(ANCHOR, const Point2D& anch, double width, double height, double rot, const Color& col);
+        
+        void drawQuad(const std::vector<Point2D>& pts, const Color& col);
+        
+        void drawGrid(const Point2D& top_left, double width, double height, Color* colors, int rows, int cols);
+        
         // Draws the convex hull defined by the n points
         // TODO make it actual polygon, not convex hull
-        void drawPolygon(Point2D* pts, int n, Color&);
-        void drawCircle(Point2D& center, int r, Color&);
-        void drawEllipse(Point2D& center, int rx, int ry, int rot, Color&);
-        void drawRing(Point2D& center, int inR, int outR, Color&);
-        void drawArc(Point2D& center, int r, int from, int to, Color&);
-        void drawRingArc(Point2D& center, int inR, int outR, int from, int to, Color&);
-        void drawLine(const std::vector<Point2D>& points, int w, Color& col, bool loop = false);
-        void drawPoint(Point2D& point, unsigned int sz, Color&);
-        void drawImage(ANCHOR, Point2D& anch, Texture* image, int w, int h, double rot);
-        void drawText(ANCHOR, Point2D& anch, std::string text, Color& col, const char* fontName, float scale, double rot);
-        void drawBezier(Point2D& p1, Point2D& p2, Point2D& c1, Point2D& c2, Color& col);
+        void drawPolygon(const std::vector<Point2D>& pts, const Color& col);
+        
+        void drawCircle(const Point2D& center, double r, const Color& col);
+        
+        void drawEllipse(const Point2D& center, double rx, double ry, double rot, const Color& col);
+        
+        void drawRing(const Point2D& center, double inR, double outR, const Color& col);
+        
+        void drawArc(const Point2D& center, double r, double fromRad, double toRad, const Color& col);
+        
+        void drawRingArc(const Point2D& center, double inRadius, double outRadius, double fromRads, double toRads, const Color& col);
+        
+        void drawLine(const std::vector<Point2D>& points, double width, const Color& col, bool loop = false);
+        
+        void drawPoint(const Point2D& point, double size, const Color& col);
+        
+        void drawImage(ANCHOR, const Point2D& anch, Texture* image, double w, double h, double rot);
+        
+        void drawText(ANCHOR, const Point2D& anch, const std::string& text, const Color& col, const char* fontName, double scale, double rot);
+        
+        void drawBezier(const Point2D& p1, const Point2D& p2, const Point2D& c1, const Point2D& c2, const Color& col);
 
         Color getBackgroundColor(){return m_BgColor;}
 
@@ -96,10 +111,10 @@ namespace vzr {
 
         void submit();
 
-        int addVert(double x, double y, Color& color);
+        int addVert(double x, double y, const Color& color);
         int addVert(double x, double y, float s, float t);
-        int addVert(double x, double y, Color& color, float s, float t);
-        void addElementBlock(GLenum mode, int vertexCount, unsigned int size, unsigned int shdrProg, int64_t tex);
+        int addVert(double x, double y, const Color& color, float s, float t);
+        void addElementBlock(GLenum mode, int vertexCount, double size, unsigned int shdrProg, int64_t tex);
         // TODO Make it so people that know how to write shader can modify the shaders used
         void compileBaseShaders();
 
@@ -119,7 +134,7 @@ namespace vzr {
         const int m_nVertexVals = 8; // number of vals in one "vertex" (xyrgbast)
         std::vector<float> m_Verts; // All vertex info (xyrgba or xyst) 
         std::vector<unsigned int> m_VertIdx; // Our EBO buffer
-        int m_CurrElemID; // The number of complete vertex in the array (should be nextpos/nVals)
+        int m_CurrElemID; // The number of complete vertex in the array
 
         std::vector<ElementBlock> m_ElemBlocks;
 

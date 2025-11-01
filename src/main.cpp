@@ -38,10 +38,10 @@ void loop(int frameCount, double timestep){
 
     vzr::Point2D pt = {700,500};
     
-    vzr::Point2D t1[3] = {
+    std::vector<vzr::Point2D> t1 = {
         {0,0}, {0,599}, {799,0}
     };
-    vzr::Point2D t2[3] = {
+    std::vector<vzr::Point2D>t2 = {
         {800,600}, {800,1}, {1,600}
     };
     
@@ -53,7 +53,7 @@ void loop(int frameCount, double timestep){
     };
 
     vzr::Color CYN {0,100,100,255};
-    vzr::Point2D poly[5] = {
+    std::vector<vzr::Point2D> poly = {
         {50,50},
         {100,0},
         {50,-50},
@@ -70,7 +70,7 @@ void loop(int frameCount, double timestep){
         spiral[i*4+3]= {10+i*40,600-(10+i*30)};
     }
 
-    vzr::Point2D bezier[4] = {
+    std::vector<vzr::Point2D> bezier = {
         botl,
         topr,
         botr,
@@ -90,7 +90,7 @@ void loop(int frameCount, double timestep){
     src1->drawPoint(pt, 100, PNK);
     src1->drawText(vzr::ANCHOR_BL,other,"The quick brown fox", vzr::WHT, fontName, 1, 0);
     src1->drawLine(spiral, 5, prl, false);
-    src1->drawPolygon(poly, 5, CYN);
+    src1->drawPolygon(poly, CYN);
     src1->drawArc(center, 100,33,133,vzr::ORG);
     src1->drawRing(center, 135,155, vzr::CYN);
     //std::cout << "Got here" << std::endl;
