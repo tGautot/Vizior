@@ -17,7 +17,7 @@ sudo cmake --install .
 3. Vizior should now be ready system wide, see this [sample project(TODO)] for an example on how to use the library 
 
 
-## Features on the Todo-List
+## Features on the Roadmap
 
  - [ ] Make camera optional
  - [ ] Add a UI mode (where coord are screen, not world)
