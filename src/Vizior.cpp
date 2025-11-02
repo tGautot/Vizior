@@ -59,8 +59,8 @@ void Start(){
         }
         framestt = time;
         
-        loop(fc++, delta);
-        usleep(1'000'000 * 1.0/targetFrameRate);
+        loop(fc++, 1.0/targetFrameRate);
+        
         for(int i = 0; i < windows.size(); i++){
             if(windows[i] == NULL) continue;
             windows[i]->drawSource();
