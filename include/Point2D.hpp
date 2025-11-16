@@ -25,7 +25,12 @@ namespace vzr {
         ~Point2D();
         void rotateAroundBy(const Point2D& around, double ang);
         Point2D rotatedAroundBy(const Point2D& around, double ang);
-        double len();
+        void rotateBy(double ang);
+        Point2D rotatedBy(double ang);
+        void normalize();
+        Point2D normalized();
+        double length();
+        double lengthSquared();
         double distTo(const Point2D& o);
 
         Point2D& operator+=(const Point2D& rhs);
@@ -34,12 +39,17 @@ namespace vzr {
         Point2D& operator/=(int rhs);
         Point2D& operator*=(double rhs);
         Point2D& operator/=(double rhs);
+        friend Point2D operator-(const Point2D& p);
         friend Point2D operator+(const Point2D& lhs, const Point2D& rhs);
         friend Point2D operator-(const Point2D& lhs, const Point2D& rhs);
         friend Point2D operator*(const Point2D& lhs, int rhs);
         friend Point2D operator/(const Point2D& lhs, int rhs);
         friend Point2D operator*(const Point2D& lhs, double rhs);
         friend Point2D operator/(const Point2D& lhs, double rhs);
+        friend Point2D operator*(int rhs, const Point2D& lhs);
+        friend Point2D operator/(int rhs, const Point2D& lhs);
+        friend Point2D operator*(double rhs, const Point2D& lhs);
+        friend Point2D operator/(double rhs, const Point2D& lhs);
         
         double x,y;    
     };

@@ -82,6 +82,8 @@ namespace vzr {
         
         void drawCircle(const Point2D& center, double r, const Color& col);
         
+        void drawCircleOutline(const Point2D& center, double r, double width, const Color& col);
+
         void drawEllipse(const Point2D& center, double rx, double ry, double rot, const Color& col);
         
         void drawRing(const Point2D& center, double inR, double outR, const Color& col);

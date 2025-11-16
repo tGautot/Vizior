@@ -57,8 +57,8 @@ LinearCamera::LinearCamera(Point2D sttPos) : Camera(sttPos){
 }
 
 void LinearCamera::movePos(Point2D dir){
-    if(dir.len() < 0.01f){return;}
-    dir /= dir.len();
+    if(dir.length() < 0.01f){return;}
+    dir /= dir.length();
     dir.rotateAroundBy({0,0},180*m_RotZ/M_PI);
     m_Pos += dir*m_Speed;
 }

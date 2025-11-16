@@ -24,8 +24,30 @@ namespace vzr {
         return newPoint;
     }
 
-    double Point2D::len(){
+    void Point2D::rotateBy(double ang){
+        rotateAroundBy(ORIGIN, ang);
+    }
+
+    Point2D Point2D::rotatedBy(double ang){
+        return rotatedAroundBy(ORIGIN, ang);
+    }
+
+    void Point2D::normalize(){
+        double len = length();
+        x /= len;
+        y /= len;
+    }
+
+    Point2D Point2D::normalized(){
+        double len = length();
+        return {x/len, y/len};
+    }
+
+    double Point2D::length(){
         return std::sqrt(x*x + y*y);
+    }
+    double Point2D::lengthSquared(){
+        return x*x + y*y;
     }
 
     double Point2D::distTo(const Point2D& o){
@@ -63,7 +85,12 @@ namespace vzr {
         this->y /= rhs;
         return *this;
     }
+    
 
+
+    Point2D operator-(const Point2D& p){
+        return {-p.x, -p.y};
+    }
     Point2D operator+(const Point2D& lhs, const Point2D& rhs){
         return Point2D(
             lhs.x + rhs.x,
@@ -100,6 +127,11 @@ namespace vzr {
             lhs.y / rhs
         );
     }
+    Point2D operator*(int rhs, const Point2D& lhs){return lhs * rhs;}
+    Point2D operator/(int rhs, const Point2D& lhs){return lhs * rhs;}
+    Point2D operator*(double rhs, const Point2D& lhs){return lhs * rhs;}
+    Point2D operator/(double rhs, const Point2D& lhs){return lhs * rhs;}
+
     
 
     const Point2D ORIGIN = {0,0};

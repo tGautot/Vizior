@@ -8,7 +8,7 @@ Color RED = {255,0,0,255};
 Color GRN = {0,255,0,255};
 Color BLU = {0,0,255,255};
 Color WHT = {255,255,255,255};
-Color BLK = {0,0,0,1};
+Color BLK = {0,0,0,255};
 Color CYN = {0,255,255,255};
 Color YLW = {255,255,0,255};
 Color PRPL = {255,0,255,255};
@@ -280,6 +280,18 @@ void ImageBuilder::drawPolygon(const std::vector<Point2D>&  pts, const Color& co
 // TODO better ways to draw cricle probably
 void ImageBuilder::drawCircle(const Point2D& center, double r, const Color& color){
     drawEllipse(center, r, r, 0, color);
+}
+
+void ImageBuilder::drawCircleOutline(const Point2D& center, double r, double width, const Color& color){
+    int precision = 180;
+    std::vector<Point2D> points(precision);
+    for(int i = 0; i < precision/2; i++){
+        int dx = cos(M_PI * i*2 / precision) * r;
+        int dy = sin(M_PI * i*2 / precision) * r;
+        points[i              ] = {center.x + dx, center.y + dy};
+        points[i + precision/2] = {center.x - dx, center.y - dy};
+    }
+    drawLine(points, width, color, true);
 }
 
 void ImageBuilder::drawEllipse(const Point2D& center, double rx, double ry, double rot, const Color& color){
