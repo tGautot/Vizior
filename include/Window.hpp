@@ -101,7 +101,14 @@ namespace vzr {
         void setCameraEnabled(bool val){m_CameraEnabled = val;};
         void resetCamera();
 
+        void set_pre_swapbuffer_callback(void (*cb)()){pre_swapbuffer_cb = cb;}
+
+
+        GLFWwindow* getGLFWWindow(){return m_glfw_Window;}
+
     private:
+
+        void (*pre_swapbuffer_cb)() = nullptr;
         
         std::shared_ptr<ImageBuilder> m_Src = nullptr;
 

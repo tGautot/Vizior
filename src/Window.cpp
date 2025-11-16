@@ -108,6 +108,8 @@ void Window::drawSource(){
     m_Src->setCamera(m_Camera);
     m_Src->submit();
 
+    if(pre_swapbuffer_cb != nullptr) pre_swapbuffer_cb();
+
     glfwSwapBuffers(m_glfw_Window);
 
     /* Updates states for getkey */
