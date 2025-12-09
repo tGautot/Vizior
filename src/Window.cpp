@@ -20,7 +20,7 @@ void glfw_scroll_callback(GLFWwindow* window, double xscroll, double yscroll){
 }
 
 Window::Window(int w, int h, const char* name)
-    : m_WinName(name), m_Width(w), m_Height(h), m_CameraEnabled(true) {
+    : m_WinName(name), m_Width(w), m_Height(h), m_CameraEnabled(true), m_save_next_img(false), m_nextimg_filename("") {
     /* Initialize the library */
     glfwSetErrorCallback(glfw_error_callback);
     if (!glfwInit()){
@@ -112,6 +112,22 @@ void Window::drawSource(){
 
     glfwSwapBuffers(m_glfw_Window);
 
+    if(m_save_next_img){
+        int w = m_Src->m_Width;
+        int h = m_Src->m_Height;
+        int buf[w * h * 3]; // Big tasty stack allocation 
+        glReadPixels(0, 0, w, h, GL_BGR, GL_UNSIGNED_BYTE, buf);
+
+        std::cout << "Writing image buffer to file " << m_nextimg_filename << std::endl;
+        FILE   *out = fopen(m_nextimg_filename.data(), "w");
+        short  TGAhead[] = {0, 2, 0, 0, 0, 0, w, h, 24};
+        fwrite(&TGAhead, sizeof(TGAhead), 1, out);
+        fwrite(buf, 3 * w * h, 1, out);
+        fclose(out);
+
+        m_save_next_img = false;
+    }
+
     /* Updates states for getkey */
     glfwPollEvents();
 
@@ -127,6 +143,11 @@ bool Window::shouldClose(){
 void Window::setSource(std::shared_ptr<ImageBuilder> src){ 
     m_Src = src;
     src->setDimensions(m_Width, m_Height); 
+}
+
+void Window::saveImage(std::string& filename){
+    m_save_next_img = true;
+    m_nextimg_filename = filename;
 }
 
 // TODO put this in camera class

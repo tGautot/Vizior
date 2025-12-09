@@ -126,6 +126,15 @@ void loop(int frameCount, double timestep){
     }
     vzr::Texture* myTex = vzr::Texture::fromPixels(100, 100, myCols) ;
     src1->drawImage(vzr::ANCHOR_TL, center, myTex, 100, 100, 0);
+    
+    if(frameCount % 60 == 0){
+        std::string fn = "vizior_screenshot_";
+        fn += std::to_string(frameCount/60);
+        fn += ".tga";
+        win1->saveImage(fn);
+
+    }
+    
     delete myTex;
 }
 

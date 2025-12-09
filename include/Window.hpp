@@ -101,6 +101,8 @@ namespace vzr {
         void setCameraEnabled(bool val){m_CameraEnabled = val;};
         void resetCamera();
 
+        void saveImage(std::string& filename);
+
         void set_pre_swapbuffer_callback(void (*cb)()){pre_swapbuffer_cb = cb;}
 
 
@@ -118,6 +120,9 @@ namespace vzr {
         const char* m_WinName;  
         int m_Width, m_Height;
         GLFWwindow* m_glfw_Window;
+
+        bool m_save_next_img;
+        std::string m_nextimg_filename;
 
         bool m_CameraEnabled;
 
